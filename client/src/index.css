@@ -558,6 +558,25 @@
     color: var(--axis-muted) !important;
   }
 
+  .axis-message-actions {
+    border-color: var(--axis-outline);
+  }
+
+  .axis-message-action {
+    color: var(--axis-muted);
+  }
+
+  .axis-message-action:hover {
+    background: color-mix(in srgb, var(--axis-accent) 9%, var(--axis-panel));
+    color: var(--axis-text);
+  }
+
+  .axis-voice-recording {
+    background: rgba(248, 165, 132, 0.16) !important;
+    border-color: rgba(248, 165, 132, 0.48) !important;
+    color: #edc1b6 !important;
+  }
+
   .axis-account-avatar {
     background: color-mix(in srgb, var(--axis-accent) 24%, var(--axis-raised)) !important;
     color: var(--axis-text) !important;

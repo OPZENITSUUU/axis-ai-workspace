@@ -46,6 +46,12 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain('enterKeyHint="send"');
     expect(home).toContain('aria-label="Message your AXIS assistant"');
     expect(home).not.toContain("GEMINI_KEY");
+    expect(home).toContain("SpeechRecognition");
+    expect(home).toContain("navigator.clipboard.writeText");
+    expect(home).toContain("speechSynthesis");
+    expect(home).not.toContain("generativelanguage.googleapis.com");
+    expect(css).toContain(".axis-message-actions");
+    expect(css).toContain(".axis-voice-recording");
     expect(home).toContain('className="axis-skeleton h-20 rounded-2xl"');
     expect(home).not.toContain('h-20 animate-pulse rounded-2xl bg-white');
     expect(themeContext).toContain('"axis:theme:v2"');

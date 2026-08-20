@@ -23,3 +23,11 @@ The reference also prevents browser zoom with a fixed maximum scale. AXIS keeps 
 ## Validation
 
 The adapted workspace passed TypeScript validation and the complete AXIS regression suite: **44 active tests passed**, with one deliberately skipped live external credential probe. A 1280×720 desktop capture retained the spacious midnight-glass layout. A 375×812 mobile capture confirmed the corrected dynamic-height shell keeps the composer dock visible beneath the independently scrolling content region.
+
+## Glass-chat interaction update
+
+The later glass-chat reference contributed three additional interactions: an explicit browser voice-input control, private assistant-response **Listen** and **Copy** actions, and visible recording feedback. AXIS uses the browser’s speech-recognition capability only after the user activates the microphone control; a recognized transcript is placed in the existing private draft, where the user can review it before sending. When unsupported or denied, AXIS shows recovery guidance and preserves typing and attachment workflows.
+
+Assistant Listen uses the browser’s local speech-synthesis capability, while Copy writes only the already-rendered assistant content to the user’s clipboard. Neither control sends content to a new third party or changes persisted messages. The mobile 375×812 review confirms the attach, voice, tools, and send controls remain visible in the safe-bottom composer dock.
+
+AXIS deliberately does not add the reference’s client-side Gemini-key storage, direct browser provider fetch, or one-click clear-chat behavior. Provider credentials remain server-only, and permanent private-data deletion continues to require the existing explicit workspace confirmation flow.

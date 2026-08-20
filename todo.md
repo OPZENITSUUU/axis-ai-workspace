@@ -140,4 +140,6 @@
 - [x] Assess the supplied OmniRoute chat, responses, media, files, search, and messages endpoints for safe per-user AXIS activation after public gateway reachability is restored (models and existing chat route validated; unapproved media, provider-file, responses, messages, and search routes remain inactive behind private activation prerequisites).
 - [x] Publish the latest sanitized gateway recovery evidence and Android APK build profile to the public AXIS GitHub repository (verified public commit `ef3e427`).
 - [x] Integrate the applicable safe-area, adaptive layout, accessibility, and responsive chat-surface improvements from `pasted_content.txt` while retaining server-only provider credentials (including a documented no-client-key boundary and verified mobile composer docking).
-- [ ] Publish the latest sanitized AXIS adaptive reference integration to the public GitHub repository.
+- [x] Publish the latest sanitized AXIS adaptive reference integration to the public GitHub repository (verified public commit `bba083e`).
+- [x] Evaluate and safely integrate applicable glass-chat reference improvements, including private message actions and voice interaction feedback, without browser-held provider keys or destructive chat clearing (browser-gated voice draft input, private Listen/Copy actions, responsive evidence, and no-client-key boundary documented).
+- [ ] Publish the latest sanitized AXIS voice and assistant-message interaction refinement to the public GitHub repository.

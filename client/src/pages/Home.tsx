@@ -15,6 +15,7 @@ import {
   Bot,
   Check,
   Command,
+  Copy,
   Download,
   FileText,
   FolderKanban,
@@ -31,6 +32,8 @@ import {
   Settings,
   Sparkles,
   Sun,
+  Square,
+  Volume2,
   Wrench,
   X,
 } from "lucide-react";
@@ -49,6 +52,20 @@ type PendingAttachment = {
   mimeType: string;
   sizeBytes: number;
 };
+
+type BrowserSpeechRecognition = {
+  lang: string;
+  continuous: boolean;
+  interimResults: boolean;
+  start: () => void;
+  stop: () => void;
+  abort: () => void;
+  onresult: ((event: { resultIndex: number; results: ArrayLike<{ isFinal: boolean; 0: { transcript: string } }> }) => void) | null;
+  onerror: ((event: { error: string }) => void) | null;
+  onend: (() => void) | null;
+};
+
+type BrowserSpeechRecognitionConstructor = new () => BrowserSpeechRecognition;
 
 const suggestedPrompts = [
   "Mujhe ek difficult topic simple Hinglish mein samjhao",
@@ -116,9 +133,11 @@ export default function Home() {
   const [commandQuery, setCommandQuery] = useState("");
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<"saved" | "draft">("saved");
+  const [isListening, setIsListening] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const streamLifecycleRef = useRef(createChatSubmissionLifecycle());
+  const voiceRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
 
   const conversationsQuery = trpc.conversations.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -339,6 +358,79 @@ export default function Home() {
       toast.error(error instanceof Error ? error.message : "Attachment upload failed.");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const copyAssistantMessage = async (content: string) => {
+    try {
+      await navigator.clipboard.writeText(content);
+      toast.success("Assistant response copied.");
+    } catch {
+      toast.error("Copy is unavailable in this browser.");
+    }
+  };
+
+  const speakAssistantMessage = (content: string) => {
+    if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
+      toast.error("Text-to-speech is unavailable in this browser.");
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(content);
+    utterance.lang = navigator.language || "en-IN";
+    window.speechSynthesis.speak(utterance);
+    toast("Reading the assistant response aloud.");
+  };
+
+  const toggleVoiceInput = () => {
+    if (isListening) {
+      voiceRecognitionRef.current?.stop();
+      return;
+    }
+
+    const voiceWindow = window as Window & {
+      SpeechRecognition?: BrowserSpeechRecognitionConstructor;
+      webkitSpeechRecognition?: BrowserSpeechRecognitionConstructor;
+    };
+    const Recognition = voiceWindow.SpeechRecognition ?? voiceWindow.webkitSpeechRecognition;
+    if (!Recognition) {
+      toast.error("Voice input is not supported by this browser. You can still type or attach a file.");
+      return;
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = navigator.language?.toLowerCase().startsWith("hi") ? "hi-IN" : "en-IN";
+    recognition.continuous = false;
+    recognition.interimResults = false;
+    recognition.onresult = event => {
+      const transcript = Array.from(event.results)
+        .slice(event.resultIndex)
+        .filter(result => result.isFinal)
+        .map(result => result[0]?.transcript ?? "")
+        .join(" ")
+        .trim();
+      if (!transcript) return;
+      setDraft(current => `${current}${current ? " " : ""}${transcript}`);
+      setDraftStatus("draft");
+    };
+    recognition.onerror = event => {
+      if (event.error !== "aborted" && event.error !== "no-speech") {
+        toast.error("Voice input could not be captured. Check your microphone permission and try again.");
+      }
+    };
+    recognition.onend = () => {
+      voiceRecognitionRef.current = null;
+      setIsListening(false);
+    };
+    voiceRecognitionRef.current = recognition;
+    try {
+      recognition.start();
+      setIsListening(true);
+      toast("Listening through your browser’s voice service. Tap again to stop.");
+    } catch {
+      voiceRecognitionRef.current = null;
+      setIsListening(false);
+      toast.error("Voice input could not start. Check your microphone permission and try again.");
     }
   };
 
@@ -605,9 +697,9 @@ export default function Home() {
                 <QueryError onRetry={chatDataReloadActions.retryConversation} />
               ) : storedMessages.length || pendingPrompt ? (
                 <div className="space-y-7">
-                  {storedMessages.map(message => <MessageBubble key={message.id} message={message} />)}
-                  {pendingPrompt && <MessageBubble message={{ id: -1, role: "user", content: pendingPrompt }} />}
-                  {(isStreaming || streamedResponse) && <MessageBubble message={{ id: -2, role: "assistant", content: streamedResponse }} loading={isStreaming && !streamedResponse} />}
+                  {storedMessages.map(message => <MessageBubble key={message.id} message={message} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />)}
+                  {pendingPrompt && <MessageBubble message={{ id: -1, role: "user", content: pendingPrompt }} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />}
+                  {(isStreaming || streamedResponse) && <MessageBubble message={{ id: -2, role: "assistant", content: streamedResponse }} loading={isStreaming && !streamedResponse} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />}
                 </div>
               ) : (
                 <EmptyConversation
@@ -638,7 +730,7 @@ export default function Home() {
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Attach file"><Paperclip className="size-4" /></button>
-                    <button type="button" onClick={() => toast("Voice input is prepared for the next AXIS release.")} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Voice input"><Mic className="size-4" /></button>
+                    <button type="button" onClick={toggleVoiceInput} aria-pressed={isListening} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", isListening && "axis-voice-recording")} aria-label={isListening ? "Stop voice input" : "Start voice input"}>{isListening ? <Square className="size-3.5" /> : <Mic className="size-4" />}</button>
                     <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
                     <span className="axis-muted-copy hidden text-[11px] sm:block">Enter to send · Shift + Enter for new line</span>
                   </div>
@@ -773,13 +865,13 @@ function QueryError({ onRetry }: { onRetry: () => void }) {
   );
 }
 
-function MessageBubble({ message, loading = false }: { message: ChatEntry; loading?: boolean }) {
+function MessageBubble({ message, loading = false, onCopy, onSpeak }: { message: ChatEntry; loading?: boolean; onCopy: (content: string) => void; onSpeak: (content: string) => void }) {
   const isUser = message.role === "user";
   return (
     <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
       {!isUser && <div className="axis-assistant-avatar mt-1 grid size-7 shrink-0 place-items-center rounded-lg"><Sparkles className="size-3.5" /></div>}
       <div className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-[14px] leading-6 sm:max-w-[78%]", isUser ? "axis-user-message rounded-tr-sm" : "axis-message-assistant rounded-tl-sm border shadow-[0_3px_12px_rgba(37,42,33,0.03)]")}>
-        {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : loading ? <div className="axis-thinking-copy flex items-center gap-2 py-1"><span className="flex gap-1"><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-current" /></span><span className="text-xs">Thinking</span></div> : <div className="assistant-markdown prose prose-sm max-w-none text-inherit"><Streamdown>{message.content}</Streamdown></div>}
+        {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : loading ? <div className="axis-thinking-copy flex items-center gap-2 py-1"><span className="flex gap-1"><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-current" /></span><span className="text-xs">Thinking</span></div> : <><div className="assistant-markdown prose prose-sm max-w-none text-inherit"><Streamdown>{message.content}</Streamdown></div><div className="axis-message-actions mt-3 flex items-center gap-1 border-t pt-2 text-xs"><button type="button" onClick={() => onSpeak(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Read assistant response aloud"><Volume2 className="size-3" />Listen</button><button type="button" onClick={() => void onCopy(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Copy assistant response"><Copy className="size-3" />Copy</button></div></>}
       </div>
     </div>
   );
