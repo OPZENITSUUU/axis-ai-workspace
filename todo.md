@@ -142,4 +142,6 @@
 - [x] Integrate the applicable safe-area, adaptive layout, accessibility, and responsive chat-surface improvements from `pasted_content.txt` while retaining server-only provider credentials (including a documented no-client-key boundary and verified mobile composer docking).
 - [x] Publish the latest sanitized AXIS adaptive reference integration to the public GitHub repository (verified public commit `bba083e`).
 - [x] Evaluate and safely integrate applicable glass-chat reference improvements, including private message actions and voice interaction feedback, without browser-held provider keys or destructive chat clearing (browser-gated voice draft input, private Listen/Copy actions, responsive evidence, and no-client-key boundary documented).
-- [ ] Publish the latest sanitized AXIS voice and assistant-message interaction refinement to the public GitHub repository.
+- [x] Publish the latest sanitized AXIS voice and assistant-message interaction refinement to the public GitHub repository (verified public commit `e1d1e49`).
+- [x] Evaluate and safely integrate applicable Pro Edition reference improvements for private conversation export and image-generation discovery without direct browser provider calls, client keys, or unvetted image URLs (private Markdown conversation export, safe `/image` discovery, existing Streamdown code presentation, and exclusions documented).
+- [ ] Publish the latest sanitized AXIS Pro Edition reference integration to the public GitHub repository.

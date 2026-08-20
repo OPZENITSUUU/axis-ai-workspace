@@ -323,6 +323,33 @@ export default function Home() {
     }
   };
 
+  const exportConversation = () => {
+    const messages = conversationQuery.data?.messages ?? [];
+    if (!messages.length) {
+      toast("Open a conversation with messages before exporting it.");
+      return;
+    }
+    const title = conversationQuery.data?.conversation.title || "axis-conversation";
+    const transcript = [
+      `# ${title}`,
+      "",
+      ...messages.flatMap(message => [
+        `## ${message.role === "user" ? "You" : "AXIS"}`,
+        "",
+        message.content,
+        "",
+      ]),
+    ].join("\n");
+    const blob = new Blob([transcript], { type: "text/markdown;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = url;
+    anchor.download = `${title.toLowerCase().replace(/[^a-z0-9]+/gi, "-").replace(/(^-|-$)/g, "") || "axis-conversation"}.md`;
+    anchor.click();
+    URL.revokeObjectURL(url);
+    toast.success("Private conversation export is ready.");
+  };
+
   const handleFileSelect = async (file: File | undefined) => {
     if (!file) return;
     if (!supportedFileTypes.has(file.type)) {
@@ -437,6 +464,11 @@ export default function Home() {
   const submitPrompt = async (text = draft) => {
     const content = text.trim();
     if (!content || isStreaming || streamLifecycleRef.current.isActive()) return;
+    if (/^\/image(?:\s|$)/i.test(content)) {
+      const prompt = content.replace(/^\/image\s*/i, "").trim();
+      toast(prompt ? "Image generation is not active yet. Your prompt remains in the private draft; add an approved server-side image provider to enable it." : "Add a description after /image to prepare an image prompt.");
+      return;
+    }
     if (!providerStatusQuery.data?.ready) {
       setSettingsOpen(true);
       toast.error("Live chat is paused until your approved OmniRoute gateway is configured.");
@@ -679,6 +711,7 @@ export default function Home() {
             </div>
           </div>
           <div className="flex items-center gap-1">
+            <button onClick={exportConversation} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex" aria-label="Export current private conversation"><Download className="size-3.5" /> Export</button>
             <button onClick={() => setCommandOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex"><Search className="size-3.5" /> Search <kbd className="rounded border border-current/20 px-1 font-mono text-[9px]">⌘K</kbd></button>
             <button onClick={() => setFocusMode(current => !current)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex"><PanelLeftClose className="size-3.5" /> {focusMode ? "Exit focus" : "Focus"}</button>
             <button onClick={() => setSettingsOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors sm:flex"><Settings className="size-3.5" /> Settings</button>
@@ -757,6 +790,7 @@ export default function Home() {
               <MobileAction icon={<Search className="size-4" />} label="Search" onClick={() => { setCommandOpen(true); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Plus className="size-4" />} label="New chat" onClick={startNewConversation} />
               <MobileAction icon={<Paperclip className="size-4" />} label="Upload file" onClick={() => { fileInputRef.current?.click(); setMobileSheetOpen(false); }} />
+              <MobileAction icon={<Download className="size-4" />} label="Export chat" onClick={() => { exportConversation(); setMobileSheetOpen(false); }} />
             </div>
           </div>
         </div>

@@ -64,6 +64,8 @@ The follow-up 375×812 capture confirms the correction: the top bar, contained l
 
 The subsequent 375×812 glass-chat interaction review confirms the composer remains visible with its four touch-safe controls: attachment, browser voice input, tools, and send. The voice icon is positioned within the same safe-bottom dock and can expose an explicit recording state without shifting the composer.
 
+At 1280×720, the latest private-export refinement adds a contained Export control beside search, focus, and settings in the desktop top bar. It remains legible against the midnight-glass header without disrupting the existing responsive composer or empty-state actions.
+
 ## 2026-08-20 — Signed-in desktop conversation and overlay evidence
 
 With the retained signed-in AXIS owner session, the settled `Heello` conversation displayed persisted user and assistant messages, including the completed `AXIS connection check` pair, above the anchored composer and online/synced status. The private settings drawer then opened as a readable midnight-glass panel with account-synced appearance, font, accent, memory, privacy, preferred-model, provider, export, and deletion controls; it preserved the underlying conversation without layout displacement.

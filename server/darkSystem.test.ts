@@ -49,6 +49,9 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("SpeechRecognition");
     expect(home).toContain("navigator.clipboard.writeText");
     expect(home).toContain("speechSynthesis");
+    expect(home).toContain("exportConversation");
+    expect(home).toContain("Private conversation export is ready.");
+    expect(home).toContain("/image");
     expect(home).not.toContain("generativelanguage.googleapis.com");
     expect(css).toContain(".axis-message-actions");
     expect(css).toContain(".axis-voice-recording");

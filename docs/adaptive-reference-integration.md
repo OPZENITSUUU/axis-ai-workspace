@@ -31,3 +31,9 @@ The later glass-chat reference contributed three additional interactions: an exp
 Assistant Listen uses the browser’s local speech-synthesis capability, while Copy writes only the already-rendered assistant content to the user’s clipboard. Neither control sends content to a new third party or changes persisted messages. The mobile 375×812 review confirms the attach, voice, tools, and send controls remain visible in the safe-bottom composer dock.
 
 AXIS deliberately does not add the reference’s client-side Gemini-key storage, direct browser provider fetch, or one-click clear-chat behavior. Provider credentials remain server-only, and permanent private-data deletion continues to require the existing explicit workspace confirmation flow.
+
+## Pro Edition reference update
+
+The Pro Edition reference contributed a contextual **Export** action and `/image` command discovery. AXIS now exports only the currently open private conversation as a local Markdown file, with clear `You` and `AXIS` sections. The original account-level private workspace export remains available in Settings for users who need their chats, projects, settings, and file metadata together.
+
+AXIS recognizes `/image <description>` as an image-generation intent without sending it to an unapproved provider. Until an owner-approved, server-side image provider is integrated, AXIS leaves the prompt in the user’s private draft and gives explicit setup guidance. This intentionally excludes the reference’s direct Pollinations URL pattern, direct browser Gemini call, and any browser-held provider credential. Existing Streamdown rendering continues to handle AXIS Markdown and code presentation without adding external CDN scripts to the application shell.
