@@ -498,9 +498,9 @@ export default function Home() {
   }));
 
   return (
-    <main className="axis-shell flex min-h-screen">
+    <main className="axis-shell flex h-[100dvh] overflow-hidden">
       <aside className={cn(
-        "axis-sidebar fixed inset-y-0 left-0 z-30 flex w-[290px] flex-col px-3 pb-4 pt-5 transition-transform md:static md:translate-x-0 md:shadow-none",
+        "axis-sidebar fixed inset-y-0 left-0 z-30 flex w-[290px] flex-col px-3 pb-[calc(1rem+env(safe-area-inset-bottom))] pt-[calc(1.25rem+env(safe-area-inset-top))] transition-transform md:static md:translate-x-0 md:shadow-none",
         focusMode && "md:hidden",
         sidebarOpen ? "translate-x-0" : "-translate-x-full",
       )}>
@@ -534,7 +534,7 @@ export default function Home() {
           <span>Recent chats</span>
           <Search className="size-3.5" />
         </div>
-        <nav className="mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
+        <nav className="axis-scroll-region mt-3 min-h-0 flex-1 overflow-y-auto pr-1">
           {conversationsQuery.isLoading ? (
             <div className="space-y-2 px-2 pt-2"><div className="h-10 animate-pulse rounded-lg bg-white/10" /><div className="h-10 animate-pulse rounded-lg bg-white/10" /></div>
           ) : conversationsQuery.isError ? (
@@ -577,7 +577,7 @@ export default function Home() {
 
       {sidebarOpen && <button className="fixed inset-0 z-20 bg-black/35 md:hidden" onClick={() => setSidebarOpen(false)} aria-label="Close menu overlay" />}
 
-      <section className="flex min-w-0 flex-1 flex-col">
+      <section className="flex min-h-0 min-w-0 flex-1 flex-col">
         <header className="axis-topbar flex h-[74px] items-center justify-between border-b px-5 backdrop-blur-xl md:px-8">
           <div className="flex items-center gap-3">
           <button onClick={() => setMobileSheetOpen(true)} className="axis-mobile-trigger grid size-9 place-items-center rounded-lg border md:hidden" aria-label="Open workspace actions"><Menu className="size-4" /></button>
@@ -594,7 +594,7 @@ export default function Home() {
         </header>
 
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-          <div className="min-h-0 flex-1 overflow-y-auto px-4 md:px-8">
+          <div className="axis-scroll-region min-h-0 flex-1 overflow-y-auto px-4 md:px-8">
             <div className="mx-auto flex w-full max-w-3xl flex-col pb-5 pt-9">
               {providerStatusQuery.isSuccess && !providerStatusQuery.data?.ready && (
                 <GatewayUnavailableCard onOpenSettings={() => setSettingsOpen(true)} />
@@ -625,7 +625,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="px-4 pb-5 pt-2 md:px-8 md:pb-7">
+          <div className="axis-composer-dock px-4 pb-5 pt-2 md:px-8 md:pb-7">
             <div className="mx-auto w-full max-w-3xl">
               {attachments.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-2">
@@ -633,16 +633,16 @@ export default function Home() {
                 </div>
               )}
               <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className="axis-composer rounded-2xl border p-2">
-                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" className="min-h-[68px] resize-none border-0 bg-transparent px-3 pt-3 text-[15px] shadow-none focus-visible:ring-0" disabled={isStreaming} />
+                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[68px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
-                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-9 place-items-center rounded-xl transition-colors disabled:opacity-50" aria-label="Attach file"><Paperclip className="size-4" /></button>
-                    <button type="button" onClick={() => toast("Voice input is prepared for the next AXIS release.")} className="axis-icon-control grid size-9 place-items-center rounded-xl transition-colors" aria-label="Voice input"><Mic className="size-4" /></button>
-                    <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-9 place-items-center rounded-xl transition-colors" aria-label="Open tools"><Wrench className="size-4" /></button>
+                    <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Attach file"><Paperclip className="size-4" /></button>
+                    <button type="button" onClick={() => toast("Voice input is prepared for the next AXIS release.")} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Voice input"><Mic className="size-4" /></button>
+                    <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
                     <span className="axis-muted-copy hidden text-[11px] sm:block">Enter to send · Shift + Enter for new line</span>
                   </div>
-                  <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className="axis-primary-control size-9 rounded-xl p-0 hover:brightness-105">
+                  <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className="axis-primary-control size-10 rounded-xl p-0 hover:brightness-105 sm:size-9">
                     {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
                     <span className="sr-only">Send message</span>
                   </Button>
