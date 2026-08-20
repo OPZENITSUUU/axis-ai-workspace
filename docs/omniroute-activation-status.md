@@ -45,6 +45,10 @@ This resolves the prior broad `auto/fast` timeout at the gateway level. The acti
 
 After the same `https://context-gravel-childcare.ngrok-free.dev/v1` URL was supplied again on 2026-08-20, AXIS ran its guarded non-billing `/v1/models` authorization probe. The endpoint produced no bytes within the 10-second bounded limit. This confirms the public tunnel was still not reachable from AXIS at the time of this check, so it is not eligible for live chat activation. No completion request was made.
 
+## Recovered public gateway and live AXIS chat
+
+Later on 2026-08-20, the configured `https://context-gravel-childcare.ngrok-free.dev/v1/models` endpoint recovered and returned HTTP 200 JSON to AXIS. The guarded server-only credential test then passed. With owner confirmation, the signed-in AXIS workspace sent one harmless `AXIS connection check` turn and received a completed assistant response through the configured `agy/gemini-3.6-flash-high` route. A browser refresh preserved one user/assistant message pair, confirming the gateway recovery and the duplicate-safe persistence lifecycle together.
+
 ## References
 
 [1]: https://github.com/diegosouzapw/OmniRoute

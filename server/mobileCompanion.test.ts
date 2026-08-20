@@ -5,13 +5,14 @@ import { describe, expect, it } from "vitest";
 describe("AXIS Android companion foundation", () => {
   it("keeps the native shell pointed at the published AXIS domain without bundling provider credentials", async () => {
     const root = path.join(process.cwd(), "mobile", "axis-mobile");
-    const [appConfig, config, screen, packageJson, readme, deviceChecklist] = await Promise.all([
+    const [appConfig, config, screen, packageJson, readme, deviceChecklist, easConfig] = await Promise.all([
       readFile(path.join(root, "app.json"), "utf8"),
       readFile(path.join(root, "src", "config.ts"), "utf8"),
       readFile(path.join(root, "app", "index.tsx"), "utf8"),
       readFile(path.join(root, "package.json"), "utf8"),
       readFile(path.join(root, "README.md"), "utf8"),
       readFile(path.join(process.cwd(), "docs", "axis-android-device-validation.md"), "utf8"),
+      readFile(path.join(root, "eas.json"), "utf8"),
     ]);
 
     expect(config).toContain("https://persaiassist-u5z3cgkj.manus.space");
@@ -29,13 +30,17 @@ describe("AXIS Android companion foundation", () => {
     expect(appConfig).toContain("RECORD_AUDIO");
     expect(appConfig).toContain('"userInterfaceStyle": "dark"');
     expect(packageJson).toContain("react-native-webview");
+    expect(packageJson).toContain("apk:preview");
     expect(readme).toContain("pnpm typecheck");
     expect(readme).toContain("expo export --platform web");
+    expect(readme).toContain("pnpm apk:preview");
     expect(readme).toContain("physical Android device or emulator");
     expect(deviceChecklist).toContain("Manus OAuth");
     expect(deviceChecklist).toContain("Private workspace");
     expect(deviceChecklist).toContain("Voice");
     expect(deviceChecklist).toContain("Error recovery");
     expect(deviceChecklist).not.toContain("OMNIROUTE_API_KEY");
+    expect(easConfig).toContain('"buildType": "apk"');
+    expect(easConfig).toContain('"distribution": "internal"');
   });
 });

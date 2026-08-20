@@ -33,3 +33,7 @@ One signed-in browser check remains: send a normal AXIS message, wait for the pe
 ## Current browser-session readiness
 
 On 2026-08-20, the published AXIS workspace was confirmed to have a retained signed-in owner session with an existing private conversation visible. The send-and-refresh portion was intentionally not run because the immediately preceding bounded, non-billing OmniRoute `/v1/models` probe timed out without response bytes. AXIS therefore remains in its no-persistence recovery state; sending a test prompt would not produce a valid assistant response and would not constitute duplicate-lifecycle evidence. Once the provider readiness probe returns successfully, this existing signed-in session can complete the manual check without another login step.
+
+## Completed signed-in live check
+
+Later on 2026-08-20, the guarded, non-billing `GET /v1/models` probe returned HTTP 200 and the server-only AXIS credential test passed. With owner confirmation, AXIS sent the harmless `AXIS connection check` prompt through the signed-in workspace. The gateway streamed and persisted one assistant response beginning `Connection active!`, and the interface returned to its normal synced state. After a full browser reload, the same conversation showed exactly one persisted `AXIS connection check` user bubble and exactly one persisted assistant response, with no temporary-preview copy and no duplicated user or assistant bubble. This completes the real browser evidence for the stream lock, persisted-refresh cleanup, and retry-safe lifecycle safeguards.

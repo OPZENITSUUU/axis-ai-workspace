@@ -25,6 +25,22 @@ pnpm exec expo export --platform web --output-dir /tmp/axis-mobile-web-export
 
 The Android build route is `pnpm android`. An APK/AAB release is the next operational step and requires the owner’s Android signing and distribution configuration; no signing credential is stored in this repository.
 
+## Build an installable APK
+
+The companion includes a release-safe EAS preview profile that produces an installable Android APK rather than an app-store bundle. From this directory, run:
+
+```bash
+pnpm apk:preview
+```
+
+The first run opens or requests an Expo account session, then EAS handles the Android signing credential and returns a private build URL. Sign in only with the account intended to own AXIS releases. Do not create or commit a keystore manually. The `production` profile intentionally produces an Android App Bundle (`.aab`) for Play Store submission rather than an APK.
+
+> This project environment does not include the Android SDK or an authenticated Expo/EAS build connection, so the cloud build needs the release owner to complete the Expo authentication step. The APK profile and source checks are included now to make that handoff deterministic.
+
+### Current APK build status
+
+On 20 August 2026, the available build environment was confirmed to have Java but no Android SDK, Gradle, or configured EAS session. `eas whoami` reported `Not logged in`, so no cloud build was submitted and no APK artifact exists yet. After the owner signs in to Expo/EAS, `pnpm apk:preview` will submit the prepared internal-distribution APK profile and return the private installer URL.
+
 ### Latest validated evidence
 
 On 20 August 2026, the refined companion passed `pnpm typecheck` and a fresh `pnpm exec expo export --platform web --output-dir /tmp/axis-mobile-web-export-20260820`, producing `index.html`, metadata, and 21 exported files. The AXIS root type-check and full regression suite also passed with 44 active tests and one intentionally skipped external credential probe. The repository-level `server/mobileCompanion.test.ts` verifies that the shell targets the published AXIS origin, keeps provider credentials outside the native bundle, enables shared WebView cookies, declares Android microphone permission, limits runtime media permission handling to audio capture, handles Android browser-history back navigation, and provides a retry path for loading and HTTP failures.

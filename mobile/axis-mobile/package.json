@@ -6,7 +6,8 @@
   "scripts": {
     "start": "expo start",
     "android": "expo start --android",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "apk:preview": "pnpm dlx eas-cli@latest build --platform android --profile preview"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
