@@ -14,7 +14,7 @@ pnpm install
 pnpm android
 ```
 
-Open the AXIS companion and confirm its normal loading state resolves to the published AXIS workspace. If the app displays its connection-retry screen, test **Try again** only after the device has network access.
+Open the AXIS companion and confirm its branded dark loading state resolves to the published AXIS workspace. If the app displays its connection-retry screen, test **Try again** only after the device has network access. When a linked page or OAuth page is in the WebView history, Android’s system Back control should return through that history before leaving the companion.
 
 ## Owner validation matrix
 
@@ -30,9 +30,12 @@ Complete every row using the same signed-in account. Do not use a second user’
 | Research | Run a non-sensitive research query from the AXIS tool. | Results are linked into the current private draft context and are not published as shared history. | Screenshot of sources with query text redacted if necessary. |
 | Voice | Start voice input, accept Android microphone permission, record a short non-sensitive phrase, and stop. | Permission is requested only when used; transcription returns to the current private chat. | Screenshot of Android permission prompt or completed transcript. |
 | Error recovery | Disable network briefly, observe the retry state, then restore network and retry. | The companion makes the recovery action obvious and restores the shell without exposing credentials. | Screenshot of retry state. |
+| Android Back | Open an in-workspace link or OAuth page, then press the Android system Back control once. | The companion returns through WebView history before Android exits the app. | Short redacted screen recording. |
 
 ## Acceptance and limitations
 
 The companion is ready for the first Android milestone only when each relevant row has been observed on a physical device or emulator. A successful Expo type-check and web export confirm bundle health, but they do **not** prove Android cookie persistence, WebView OAuth return behavior, runtime microphone permission, or file-picker behavior.
+
+The source and web-bundle validation was refreshed on 20 August 2026 after adding a dark AXIS loading surface, explicit retry handling for loading and HTTP failures, least-privilege audio-capture WebView permission handling, and Android browser-history Back support. These improvements remain subject to the physical-device checks above.
 
 Record any failed row with Android version, Expo Go version, device/emulator model, a redacted screenshot, and the exact action that triggered it. The owner can then supply that evidence for a targeted AXIS fix.

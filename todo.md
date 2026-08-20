@@ -132,4 +132,7 @@
 - [x] Add a bounded non-billing OmniRoute readiness preflight before AXIS persists a new user turn when the public tunnel is offline.
 - [x] Revalidate the supplied `https://context-gravel-childcare.ngrok-free.dev/v1` gateway after the owner restart and update AXIS activation status from the live result (the bounded non-billing `/v1/models` probe timed out without response bytes).
 - [x] Commit a concise duplicate-prevention validation note after the expanded lifecycle suite passes.
-- [ ] Verify that the public AXIS GitHub repository contains the latest sanitized gateway-resilience and validation source updates.
+- [x] Verify that the public AXIS GitHub repository contains the latest sanitized gateway-resilience and validation source updates (published commit `416e17b` includes the stream lifecycle, no-persistence readiness, regression tests, and recovery documentation).
+- [ ] Verify that the configured public `/v1` tunnel reaches the owner-reported HTTPS OmniRoute service on port 20128 and update AXIS readiness from the live result.
+- [x] Refine and validate the existing AXIS Expo Android companion as a secure, branded mobile shell for the published private workspace (dark loading/retry states, audio-only WebView permission handling, Android Back support, type-check, web export, and regression evidence).
+- [ ] Publish the latest sanitized AXIS Android companion refinements to the existing public GitHub repository.

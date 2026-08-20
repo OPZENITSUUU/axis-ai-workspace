@@ -20,9 +20,14 @@ describe("AXIS Android companion foundation", () => {
     expect(screen).toContain("sharedCookiesEnabled");
     expect(screen).toContain("thirdPartyCookiesEnabled");
     expect(screen).toContain("onPermissionRequest");
+    expect(screen).toContain("ANDROID_AUDIO_CAPTURE");
+    expect(screen).toContain("onNavigationStateChange");
+    expect(screen).toContain("hardwareBackPress");
+    expect(screen).toContain("onHttpError");
     expect(screen).toContain("Try again");
     expect(screen).toContain("AXIS_WEB_URL");
     expect(appConfig).toContain("RECORD_AUDIO");
+    expect(appConfig).toContain('"userInterfaceStyle": "dark"');
     expect(packageJson).toContain("react-native-webview");
     expect(readme).toContain("pnpm typecheck");
     expect(readme).toContain("expo export --platform web");
