@@ -53,6 +53,10 @@ Later on 2026-08-20, the configured `https://context-gravel-childcare.ngrok-free
 
 On the same date, a later non-billing recheck against the configured public `/v1/models` endpoint timed out during the TLS connection stage after 12 seconds with no response bytes. The explicitly enabled AXIS credential probe independently timed out at its 10-second guard. This is an intermittent reachability regression after the successful live-chat evidence above; it does not invalidate that prior successful chat, but AXIS should treat a new readiness failure as unavailable and avoid persisting a new turn until the tunnel returns a models response. No completion request was sent during this recheck.
 
+## Successful public tunnel revalidation
+
+On 2026-08-20, AXIS reran the explicit guarded credential test against the configured public `/v1/models` endpoint. The server-only request completed successfully in 6.4 seconds, returned an authorized model catalog, and did not create a chat completion or persist any user message. This confirms that the configured public `/v1` tunnel was again reachable from AXIS and forwarded requests to the owner-reported OmniRoute service at the time of the check. Because this tunnel has shown intermittent availability, AXIS retains its existing readiness preflight and will block new private turns whenever a bounded models check fails.
+
 ## References
 
 [1]: https://github.com/diegosouzapw/OmniRoute
