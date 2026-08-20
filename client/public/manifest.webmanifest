@@ -1,0 +1,10 @@
+{
+  "name": "AXIS — Private AI Workspace",
+  "short_name": "AXIS",
+  "description": "A private, persistent AI workspace for conversations, projects, files, and focused work.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#eeeee8",
+  "theme_color": "#20231d",
+  "orientation": "portrait-primary"
+}

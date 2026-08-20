@@ -1,0 +1,19 @@
+{
+  "expo": {
+    "name": "AXIS",
+    "slug": "axis-mobile",
+    "version": "0.1.0",
+    "orientation": "portrait",
+    "scheme": "axis",
+    "userInterfaceStyle": "automatic",
+    "android": {
+      "package": "space.manus.axis.mobile",
+      "edgeToEdgeEnabled": true,
+      "permissions": ["RECORD_AUDIO"]
+    },
+    "plugins": ["expo-router"],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

@@ -1,0 +1,112 @@
+# Project TODO
+
+- [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
+- [x] Select and configure a replacement model provider because GitHub Models was retired on 30 July 2026 (OmniRoute is the selected experimental primary route).
+- [x] Evaluate provider options against sustainable no-cost or low-cost use, response speed, streaming support, and reliability.
+- [x] Document the selected provider’s free-tier limits and an honest fallback path if its allowance is exhausted.
+- [x] Configure the approved Gemini Free Tier API key as a server-only project secret and validate it without exposing it to the client.
+- [x] Inspect the provided OmniRoute repository for purpose, license, maintenance, security, and compatibility before using it.
+- [x] Determine a supported OmniRoute deployment path compatible with the cloud application runtime.
+- [x] Provide a secure deployment checklist for an independently hosted OmniRoute gateway and its connection to the chat app.
+- [x] Add an isolated OmniRoute experimental provider adapter with no browser-exposed credentials or user session forwarding.
+- [x] Keep Gemini as a separately configurable fallback provider rather than coupling private chat data to one experimental route.
+- [x] Define the supported direct-provider set and a safe fallback order for AXIS chat.
+- [x] Add server-only configuration contracts for additional direct AI providers without exposing any API key to the browser.
+- [x] Add a user-facing provider picker that lists only providers configured by the workspace owner.
+- [x] Preserve a private conversation’s selected provider and provider model for future continuation.
+- [x] Add graceful fallback messaging when a selected provider is unavailable or reaches its limit.
+- [x] Block all paid-provider calls by default unless the owner explicitly enables paid usage through a server-only setting.
+- [x] Exclude the OpenAI API adapter from the active provider list while zero-paid-usage mode is enabled.
+- [x] Show a clear no-billing status when no approved free provider is configured, instead of attempting an AI call.
+- [x] Add an owner-controlled server-only paid-provider gate with disabled and enabled test coverage.
+- [x] Prevent chat submission and direct streaming when the approved OmniRoute gateway is not configured.
+- [x] Prepare AXIS for open-source release with secret-safe documentation and no committed credentials.
+- [x] Document the future Android APK approach that reuses the existing AXIS server and provider APIs.
+- [x] Document the chosen managed database, object storage, hosting, authentication, and environment-variable responsibilities.
+- [x] Capture and share current desktop and mobile AXIS design previews, including theme, typography, colors, and layout decisions.
+- [x] Add a command bar that searches private chats, files, projects, settings, and workspace actions.
+- [x] Upgrade the sidebar with recent chats and pinned private projects rather than decorative placeholders.
+- [x] Add an empty-state action set for new chat, private file upload, and resuming a project.
+- [x] Upgrade the composer with minimal attachment, voice-placeholder, tool-placeholder, send, and keyboard shortcut controls.
+- [x] Add subtle activity feedback for typing, loading, syncing, saved, draft, and error states.
+- [x] Add a smart account-synced settings drawer for theme, font size, accent, selected model, memory, and privacy preferences.
+- [x] Add focus mode with a collapsed sidebar and narrow distraction-free reading column.
+- [x] Add a responsive mobile workspace sheet for menu, search, new chat, and uploads.
+- [x] Add a compact private workspace status badge for online, sync, and draft state.
+- [x] Create user-scoped projects and connect conversations/files to their owning project where applicable.
+- [x] Implement account-scoped settings persistence and role-ready access control foundations.
+- [x] Add private export and deletion capabilities for a user’s workspace data.
+- [x] Extend authorization tests so chats, messages, files, projects, and settings are never visible across user accounts.
+- [x] Add private attachment/file results to the command palette search.
+- [x] Add explicit draft-saved and saved microfeedback tied to composer activity.
+- [x] Add a selected-model preference control to the account-synced settings drawer.
+- [x] Implement a true mobile bottom sheet with menu, search, new chat, and upload actions.
+- [x] Add a compact online, sync, and draft status badge component.
+- [x] Add cross-user authorization tests for messages and attachments/files plus broader workspace resources.
+- [x] Implement a provider adapter so the app can later migrate from Gemini Free Tier without changing the chat experience.
+- [x] Build the frontend with React and retain the project’s Node.js/Express server architecture.
+- [x] Use the existing managed database and object storage for the first version instead of adding a separate Supabase or Firebase dependency.
+- [x] Prepare the app for managed cloud hosting; do not rely on Vercel, Railway, or Render for the initial deployment.
+- [x] Implement a server-side provider registry and tested fallback order that matches the documented supported provider set.
+- [x] Add runtime provider-status validation that exposes only eligible configured providers to AXIS users.
+- [x] Verify build and production-start behavior as managed-hosting readiness evidence.
+- [x] Create the private conversation, message, and attachment data model scoped to the authenticated user.
+- [x] Apply the database migration for conversation persistence and private user ownership.
+- [x] Build server procedures for creating, listing, loading, and continuing private chat conversations.
+- [x] Add secure server-side streaming responses from the selected Gemini endpoint.
+- [x] Persist user prompts and completed assistant responses to the database.
+- [x] Add language-aware system behavior so replies follow the user’s language automatically.
+- [x] Add authenticated file upload support for supported documents and images with private storage references.
+- [x] Include uploaded text and image context in applicable model requests without exposing file URLs publicly.
+- [x] Build the authenticated React chat frontend with a conversation sidebar, new-chat flow, and settings entry point.
+- [x] Wire auth-aware browser streaming and file upload requests to the secure chat endpoints.
+- [x] Build a polished responsive dashboard with conversation sidebar, new-chat control, and settings entry point.
+- [x] Add refined streaming chat interactions with Markdown rendering and styled code blocks for assistant messages.
+- [x] Implement loading, error, empty, mobile, and unauthenticated states.
+- [x] Add Vitest coverage for authorization boundaries, chat persistence, and server-side API configuration.
+- [x] Add explicit conversation-list and conversation-detail error states with retry actions.
+- [x] Add Vitest coverage for creating and loading private conversations, messages, and attachments.
+- [x] Verify the application visually on desktop and mobile, then save a completion checkpoint.
+- [x] Save a completion checkpoint for the verified AXIS private workspace state.
+- [x] Store the supplied OmniRoute gateway token as a server-only secret without enabling the unreachable local endpoint.
+- [ ] Configure and validate AXIS against the OmniRoute public HTTPS `/v1` base URL when the user provides it.
+- [ ] Confirm live-chat readiness in AXIS after the public OmniRoute models endpoint validates successfully.
+- [ ] Receive the owner-controlled public HTTPS OmniRoute `/v1` URL needed to complete server-side gateway validation.
+- [ ] Store and validate the supplied `https://cloud.omniroute.online/v1` OmniRoute endpoint with the server-only gateway credential.
+- [x] Provide the owner with an OmniRoute account-status, token-scope, and public endpoint authorization checklist for the observed 401.
+- [x] Commit the OmniRoute 401 account-status and authorization checklist to project documentation.
+- [x] Inspect the stored OmniRoute token for leading/trailing whitespace and non-secret format metadata without revealing it.
+- [x] Define and document the true Android-first AXIS client architecture, secure mobile authentication flow, and shared user-scoped backend contract.
+- [x] Create a separate Expo/React Native AXIS mobile app foundation instead of relying only on installable web behavior.
+- [ ] Verify the supported WebView-based Manus OAuth session model end to end in the Expo companion and document its native-session limitation.
+- [ ] Validate signed-in private workspace entry and owner-scoped conversation loading within the Expo companion.
+- [ ] Validate companion support and permission/error behavior for chat, projects, files, settings, provider status, research, and voice tools.
+- [x] Complete Android preview/build documentation and add test evidence tied to the supported mobile flows.
+- [x] Install and independently type-check the AXIS Expo companion foundation.
+- [x] Provide the owner-side persistent HTTPS tunnel steps that expose `localhost:20128` as a public OmniRoute `/v1` gateway.
+- [x] Prepare the secure local-to-public OmniRoute exposure checklist (public endpoint verification remains tracked separately).
+- [x] Document the server-only AXIS local-development configuration for a same-machine OmniRoute endpoint and its production distinction.
+- [x] Replace silent no-provider chat-send behavior with clear AXIS gateway-unavailable guidance and a visible setup action.
+- [x] Add regression coverage for the unavailable-provider submission path and resulting user guidance.
+- [x] Verify and commit the OmniRoute endpoint-mapping document covering active chat, models validation, inactive future endpoints, and production authorization.
+- [x] Prepare the secure local-to-public OmniRoute exposure checklist and verify the public endpoint once the user runs it (checklist prepared; public endpoint verification remains pending).
+- [x] Investigate the 2026-08-19 AXIS recording, correlate its observed behavior with current runtime state, and provide the corrective action.
+- [x] Commit the 2026-08-19 recording-specific invalid-key root cause and token-rotation verification steps to OmniRoute troubleshooting documentation.
+- [x] Define premium AXIS dark design tokens for layered surfaces, typography, borders, accent, focus, and responsive spacing.
+- [x] Apply the premium dark visual system consistently to public entry, workspace, sidebar, chat, search, forms, cards, settings, modals, tabs, and feedback states.
+- [x] Add restrained responsive motion, loading stability, accessible contrast, focus indicators, and interaction feedback across the dark experience.
+- [x] Verify polished dark AXIS presentation at desktop, tablet, and mobile breakpoints and add regression coverage for key visual-system contracts.
+- [x] Capture the settled premium dark AXIS workspace after conversation data resolves at desktop and mobile breakpoints.
+- [x] Replace dark workspace loading placeholders with neutral shimmer surfaces instead of accent-colored blocks.
+- [x] Replace remaining hard-coded light utilities with first-class AXIS token classes across workspace and overlay surfaces, including research and tabbed UI where present.
+- [ ] Capture and review authenticated AXIS desktop, tablet, and mobile states for a settled conversation, loading state, settings/modal, and command palette.
+- [x] Replace remaining hard-coded light utility classes in Home.tsx and related live workspace surfaces with explicit AXIS token/component classes.
+- [x] Verify and document whether research/dialog and tabbed UI surfaces are present in the live AXIS product, then apply explicit AXIS styling where applicable.
+- [x] Define a restrained midnight-glass and obsidian-aurora token layer that preserves AXIS contrast, teal intelligence cues, and reduced-motion safeguards.
+- [x] Apply translucent layered glass surfaces, cool cyan-violet ambient accents, illuminated active navigation, and consistent glass controls across the live AXIS page.
+- [x] Add lightweight aurora, hover, page, modal, and loading motion that remains performant and respects reduced-motion preferences.
+- [x] Verify the midnight-glass AXIS presentation at desktop, tablet, and mobile breakpoints without compromising readable text or loading stability.
+- [ ] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and any available overlay surfaces.
+- [x] Correct the OmniRoute credential test so its normal-suite guard is skipped during an explicitly requested live probe.
+- [x] Create and deliver a complete sanitized AXIS source-code archive containing the web app, server, schema, mobile companion, tests, and documentation without secrets or dependency artifacts.
+- [ ] Create and deliver the same verified sanitized AXIS source package in TAR.GZ format as an alternative to ZIP.
