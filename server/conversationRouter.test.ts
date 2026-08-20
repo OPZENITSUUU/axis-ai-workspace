@@ -89,7 +89,8 @@ describe("conversations router privacy", () => {
 
     await caller.conversations.create({ title: "Private thread" });
 
-    expect(dbMocks.createConversation).toHaveBeenCalledWith(44, "Private thread", undefined, "omniroute", "auto/fast");
+    const configuredModel = process.env.OMNIROUTE_MODEL?.trim() || "auto/fast";
+    expect(dbMocks.createConversation).toHaveBeenCalledWith(44, "Private thread", undefined, "omniroute", configuredModel);
   });
 
   it("rejects anonymous requests before any conversation data is queried", async () => {

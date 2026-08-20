@@ -4,6 +4,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { trpc } from "@/lib/trpc";
+import { createChatDataReloadActions } from "@/lib/chatDataReloadActions";
+import { createChatSubmissionLifecycle } from "@/lib/chatStreamPreview";
 import { startLogin } from "@/const";
 import { cn } from "@/lib/utils";
 import { gatewayUnavailableGuidance } from "@shared/providerGuidance";
@@ -116,6 +118,7 @@ export default function Home() {
   const [draftStatus, setDraftStatus] = useState<"saved" | "draft">("saved");
   const fileInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
+  const streamLifecycleRef = useRef(createChatSubmissionLifecycle());
 
   const conversationsQuery = trpc.conversations.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -131,6 +134,10 @@ export default function Home() {
     { conversationId: activeConversationId ?? 0 },
     { enabled: isAuthenticated && activeConversationId !== null },
   );
+  const chatDataReloadActions = createChatDataReloadActions({
+    reloadConversation: () => { void conversationQuery.refetch(); },
+    reloadConversationList: () => { void conversationsQuery.refetch(); },
+  });
   const createConversation = trpc.conversations.create.useMutation();
   const createProject = trpc.projects.create.useMutation();
   const updateProject = trpc.projects.update.useMutation();
@@ -337,13 +344,15 @@ export default function Home() {
 
   const submitPrompt = async (text = draft) => {
     const content = text.trim();
-    if (!content || isStreaming) return;
+    if (!content || isStreaming || streamLifecycleRef.current.isActive()) return;
     if (!providerStatusQuery.data?.ready) {
       setSettingsOpen(true);
       toast.error("Live chat is paused until your approved OmniRoute gateway is configured.");
       return;
     }
 
+    const preview = streamLifecycleRef.current.tryStart(content);
+    if (!preview) return;
     setDraft("");
     setDraftStatus("saved");
     try {
@@ -351,8 +360,8 @@ export default function Home() {
     } catch {
       // The prompt remains safe to send if local storage is not available.
     }
-    setPendingPrompt(content);
-    setStreamedResponse("");
+    setPendingPrompt(preview.pendingPrompt);
+    setStreamedResponse(preview.streamedResponse);
     setIsStreaming(true);
 
     try {
@@ -395,7 +404,7 @@ export default function Home() {
           setActiveConversationId(payload.id);
         }
         if (eventName === "token" && payload.text) {
-          setStreamedResponse(current => current + payload.text!);
+          setStreamedResponse(streamLifecycleRef.current.append(payload.text!).streamedResponse);
         }
         if (eventName === "provider_fallback" && payload.from && payload.to) {
           toast(`AXIS switched from ${payload.from} to ${payload.to} before the response started.`);
@@ -423,11 +432,15 @@ export default function Home() {
         ]);
       }
       setAttachments([]);
+      const persistedPreview = streamLifecycleRef.current.finishAfterPersistedRefresh();
+      setPendingPrompt(persistedPreview.pendingPrompt);
+      setStreamedResponse(persistedPreview.streamedResponse);
     } catch (error) {
       const message = error instanceof Error ? error.message : "The assistant could not respond.";
       setStreamedResponse(`I couldn't complete that response. ${message}`);
       toast.error(message);
     } finally {
+      streamLifecycleRef.current.release();
       setIsStreaming(false);
       setPendingPrompt("");
     }
@@ -527,7 +540,7 @@ export default function Home() {
           ) : conversationsQuery.isError ? (
             <div className="mx-2 mt-3 rounded-xl border border-white/10 bg-white/5 p-3 text-xs leading-5 text-white/55">
               <p>Conversations could not be loaded.</p>
-              <button onClick={() => void conversationsQuery.refetch()} className="axis-accent-icon mt-2 font-semibold hover:brightness-110">Try again</button>
+              <button onClick={chatDataReloadActions.retryConversationList} className="axis-accent-icon mt-2 font-semibold hover:brightness-110">Try again</button>
             </div>
           ) : conversationsQuery.data?.length ? (
             <div className="space-y-1">
@@ -589,7 +602,7 @@ export default function Home() {
               {conversationQuery.isLoading && activeConversationId ? (
                 <div className="space-y-5" aria-label="Loading conversation"><div className="axis-skeleton h-20 rounded-2xl" /><div className="axis-skeleton ml-auto h-16 w-2/3 rounded-2xl" /></div>
               ) : conversationQuery.isError && activeConversationId ? (
-                <QueryError onRetry={() => void conversationQuery.refetch()} />
+                <QueryError onRetry={chatDataReloadActions.retryConversation} />
               ) : storedMessages.length || pendingPrompt ? (
                 <div className="space-y-7">
                   {storedMessages.map(message => <MessageBubble key={message.id} message={message} />)}

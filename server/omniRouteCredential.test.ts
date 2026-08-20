@@ -9,18 +9,25 @@ function isCloudReachableGatewayUrl(value: string | undefined) {
 
 const isCloudReachableBaseUrl = isCloudReachableGatewayUrl(baseUrl);
 const runLiveCredentialCheck = process.env.RUN_OMNIROUTE_CREDENTIAL_CHECK === "true";
+const liveCredentialTimeoutMs = 10_000;
 
 describe("OmniRoute gateway credential", () => {
   it.runIf(Boolean(runLiveCredentialCheck && isCloudReachableBaseUrl && apiKey))("lists gateway models with the server-only bearer token", async () => {
-    const response = await fetch(`${baseUrl}/models`, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      signal: AbortSignal.timeout(10_000),
-    });
+    let response: Response;
+    try {
+      response = await fetch(`${baseUrl}/models`, {
+        headers: { Authorization: `Bearer ${apiKey}` },
+        signal: AbortSignal.timeout(liveCredentialTimeoutMs),
+      });
+    } catch (error) {
+      const detail = error instanceof Error ? error.message : String(error);
+      throw new Error(`OmniRoute /models did not respond within ${liveCredentialTimeoutMs}ms: ${detail}`);
+    }
 
     expect(response.ok, `OmniRoute /models returned ${response.status}`).toBe(true);
     const body = await response.json() as { data?: unknown[] };
     expect(Array.isArray(body.data)).toBe(true);
-  });
+  }, liveCredentialTimeoutMs + 2_000);
 
   it("distinguishes loopback development endpoints from public gateway addresses", () => {
     expect(isCloudReachableGatewayUrl("http://127.0.0.1:20128/v1")).toBe(false);

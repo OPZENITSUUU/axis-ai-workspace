@@ -69,10 +69,10 @@
 - [x] Verify the application visually on desktop and mobile, then save a completion checkpoint.
 - [x] Save a completion checkpoint for the verified AXIS private workspace state.
 - [x] Store the supplied OmniRoute gateway token as a server-only secret without enabling the unreachable local endpoint.
-- [ ] Configure and validate AXIS against the OmniRoute public HTTPS `/v1` base URL when the user provides it.
-- [ ] Confirm live-chat readiness in AXIS after the public OmniRoute models endpoint validates successfully.
-- [ ] Receive the owner-controlled public HTTPS OmniRoute `/v1` URL needed to complete server-side gateway validation.
-- [ ] Store and validate the supplied `https://cloud.omniroute.online/v1` OmniRoute endpoint with the server-only gateway credential.
+- [x] Configure and validate AXIS against the OmniRoute public HTTPS `/v1` base URL when the user provides it.
+- [ ] Confirm the authenticated AXIS server chat path end to end after the gateway-level explicit-model stream succeeds.
+- [x] Receive the owner-controlled public HTTPS OmniRoute `/v1` URL needed to complete server-side gateway validation.
+- [ ] Revalidate `https://cloud.omniroute.online/v1` only if it becomes the intended active endpoint again; its previous server-only check returned 401.
 - [x] Provide the owner with an OmniRoute account-status, token-scope, and public endpoint authorization checklist for the observed 401.
 - [x] Commit the OmniRoute 401 account-status and authorization checklist to project documentation.
 - [x] Inspect the stored OmniRoute token for leading/trailing whitespace and non-secret format metadata without revealing it.
@@ -109,4 +109,27 @@
 - [ ] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and any available overlay surfaces.
 - [x] Correct the OmniRoute credential test so its normal-suite guard is skipped during an explicitly requested live probe.
 - [x] Create and deliver a complete sanitized AXIS source-code archive containing the web app, server, schema, mobile companion, tests, and documentation without secrets or dependency artifacts.
-- [ ] Create and deliver the same verified sanitized AXIS source package in TAR.GZ format as an alternative to ZIP.
+- [x] Create and deliver the same verified sanitized AXIS source package in TAR.GZ format as an alternative to ZIP (320,482 bytes, 196 paths, and no `.env`, key, `.git`, or `node_modules` entries).
+- [x] Create and publish a public GitHub repository containing the sanitized AXIS source code, documentation, tests, and configuration without secrets or dependency artifacts.
+- [x] Create and publish a public GitHub repository containing the sanitized AXIS source code, documentation, tests, and configuration without secrets or dependency artifacts.
+- [x] Store and validate the supplied `https://context-gravel-childcare.ngrok-free.dev/v1` OmniRoute public endpoint with a server-only active gateway credential.
+- [x] Align the guarded OmniRoute credential test timeout with its HTTP timeout so unavailable public tunnels report a clear endpoint result rather than a premature test-runner timeout.
+- [x] Obtain owner confirmation that one minimal `/v1/chat/completions` probe through the active ngrok gateway has no billing impact before performing that endpoint-level chat validation.
+- [ ] Obtain OmniRoute dashboard/log evidence for the original `auto/fast` timeout cause; the explicit-model resolution is verified but the broad-route cause remains inferred.
+- [x] Configure AXIS to use the owner-supplied explicit `agy/gemini-3.6-flash-high` OmniRoute model and validate one minimal chat-completions response through the active ngrok gateway.
+- [x] Diagnose and fix the reported AXIS doubling/duplicate behavior across chat send, stream rendering, retry, and list refresh flows.
+- [x] Add behavior-level coverage for rapid double-submit prevention and stale stream-preview cleanup after persisted conversation refresh.
+- [x] Audit AXIS retry, resend, and refetch paths for duplicate message rendering or repeat request risk, and document any safeguards.
+- [ ] Perform a real signed-in AXIS browser chat lifecycle validation showing one rendered persisted user message and one rendered assistant response after send and refresh.
+- [x] Add a behavioral regression test proving temporary stream previews clear after a successful persisted-message refresh.
+- [x] Add durable retry/refetch safety assertions and validation evidence for AXIS chat lifecycle controls.
+- [x] Add a lifecycle-level regression test proving persisted-message refresh clears temporary previews in the same flow.
+- [x] Cover every AXIS conversation and message retry/refetch control to prove it cannot invoke chat submission or duplicate rendering.
+- [x] Add behavior-level retry/refetch lifecycle tests proving reload actions do not trigger a chat submission.
+- [ ] Complete signed-in AXIS send, refresh, and retry validation proving a single persisted user/assistant message pair remains visible.
+- [ ] Diagnose and correct the reported ngrok offline (`ERR_NGROK_3200`) and AXIS OmniRoute 404 gateway behavior.
+- [x] Replace raw gateway timeout/offline/404 error details in the AXIS chat UI with clear private workspace recovery guidance.
+- [x] Add a bounded non-billing OmniRoute readiness preflight before AXIS persists a new user turn when the public tunnel is offline.
+- [x] Revalidate the supplied `https://context-gravel-childcare.ngrok-free.dev/v1` gateway after the owner restart and update AXIS activation status from the live result (the bounded non-billing `/v1/models` probe timed out without response bytes).
+- [x] Commit a concise duplicate-prevention validation note after the expanded lifecycle suite passes.
+- [ ] Verify that the public AXIS GitHub repository contains the latest sanitized gateway-resilience and validation source updates.

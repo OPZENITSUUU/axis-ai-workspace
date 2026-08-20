@@ -12,6 +12,7 @@ import {
 } from "./db";
 import { ChatTurn } from "./geminiProvider";
 import { getProviderStatus, isProviderId, streamModelResponse } from "./modelProvider";
+import { getOmniRouteReadiness } from "./omniRouteProvider";
 import { sdk } from "./_core/sdk";
 import { storageGetSignedUrl, storagePut } from "./storage";
 
@@ -151,6 +152,13 @@ export function registerChatRoutes(app: Express) {
       if (!providerStatus.ready) {
         res.status(503).json({ error: "Live chat is paused until the approved OmniRoute gateway is configured." });
         return;
+      }
+      if (providerStatus.id === "omniroute") {
+        const readiness = await getOmniRouteReadiness();
+        if (!readiness.ready) {
+          res.status(503).json({ error: readiness.message });
+          return;
+        }
       }
 
       let conversation = body.conversationId
