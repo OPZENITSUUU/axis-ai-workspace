@@ -1,6 +1,16 @@
 import { useAuth } from "@/_core/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { trpc } from "@/lib/trpc";
@@ -28,12 +38,14 @@ import {
   Moon,
   Paperclip,
   PanelLeftClose,
+  Pencil,
   Plus,
   Search,
   Settings,
   Sparkles,
   Sun,
   Square,
+  Trash2,
   Volume2,
   Wrench,
   X,
@@ -146,6 +158,10 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
   const [voiceTuning, setVoiceTuning] = useState(defaultVoiceTuning);
+  const [csvManagerOpen, setCsvManagerOpen] = useState(false);
+  const [csvRenameId, setCsvRenameId] = useState<number | null>(null);
+  const [csvRenameValue, setCsvRenameValue] = useState("");
+  const [csvDeleteTarget, setCsvDeleteTarget] = useState<{ id: number; fileName: string } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -160,6 +176,7 @@ export default function Home() {
   });
   const projectsQuery = trpc.projects.list.useQuery(undefined, { enabled: isAuthenticated });
   const filesQuery = trpc.files.list.useQuery(undefined, { enabled: isAuthenticated });
+  const csvFilesQuery = trpc.files.listCsv.useQuery(undefined, { enabled: isAuthenticated && csvManagerOpen });
   const settingsQuery = trpc.workspace.settings.useQuery(undefined, { enabled: isAuthenticated });
   const exportWorkspaceQuery = trpc.workspace.export.useQuery(undefined, { enabled: false });
   const conversationQuery = trpc.conversations.get.useQuery(
@@ -176,6 +193,8 @@ export default function Home() {
   const updateSettings = trpc.workspace.updateSettings.useMutation();
   const deleteWorkspaceData = trpc.workspace.deleteData.useMutation();
   const selectConversationProvider = trpc.conversations.selectProvider.useMutation();
+  const renameCsvFile = trpc.files.renameCsv.useMutation();
+  const deleteCsvFile = trpc.files.deleteCsv.useMutation();
 
   useEffect(() => {
     if (!activeConversationId && conversationsQuery.data?.[0]) {
@@ -197,6 +216,7 @@ export default function Home() {
         setCommandOpen(false);
         setSettingsOpen(false);
         setVoiceFocusOpen(false);
+        setCsvManagerOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyboardShortcut);
@@ -412,6 +432,48 @@ export default function Home() {
       toast.error(error instanceof Error ? error.message : "Attachment upload failed.");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
+  const openCsvManager = () => {
+    setCsvRenameId(null);
+    setCsvRenameValue("");
+    setCsvManagerOpen(true);
+  };
+
+  const beginCsvRename = (file: { id: number; fileName: string }) => {
+    setCsvRenameId(file.id);
+    setCsvRenameValue(file.fileName);
+  };
+
+  const saveCsvRename = async () => {
+    if (!csvRenameId || !csvRenameValue.trim()) return;
+    try {
+      await renameCsvFile.mutateAsync({ attachmentId: csvRenameId, fileName: csvRenameValue });
+      setCsvRenameId(null);
+      setCsvRenameValue("");
+      await Promise.all([utils.files.list.invalidate(), utils.files.listCsv.invalidate()]);
+      toast.success("Private CSV file renamed.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "CSV file could not be renamed.");
+    }
+  };
+
+  const removeCsvFile = async () => {
+    if (!csvDeleteTarget) return;
+    try {
+      const removedId = csvDeleteTarget.id;
+      await deleteCsvFile.mutateAsync({ attachmentId: removedId, confirmation: "DELETE CSV" });
+      setCsvDeleteTarget(null);
+      setAttachments(current => current.filter(attachment => attachment.id !== removedId));
+      await Promise.all([
+        utils.files.list.invalidate(),
+        utils.files.listCsv.invalidate(),
+        activeConversationId ? utils.conversations.get.invalidate({ conversationId: activeConversationId }) : Promise.resolve(),
+      ]);
+      toast.success("Private CSV file removed.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "CSV file could not be removed.");
     }
   };
 
@@ -857,6 +919,7 @@ export default function Home() {
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
               <div className="py-4"><p className="text-sm font-medium">Browser voice tuning</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Applies only to the private Listen action in this browser. AXIS does not send these controls or message audio to an AI provider.</p><label className="axis-muted-copy mt-3 block text-xs" htmlFor="voice-rate">Speech speed <span className="float-right font-mono">{voiceTuning.rate.toFixed(1)}×</span></label><input id="voice-rate" type="range" min="0.5" max="1.8" step="0.1" value={voiceTuning.rate} onChange={event => updateVoiceTuning({ rate: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /><label className="axis-muted-copy mt-4 block text-xs" htmlFor="voice-pitch">Speech pitch <span className="float-right font-mono">{voiceTuning.pitch.toFixed(1)}×</span></label><input id="voice-pitch" type="range" min="0.5" max="1.5" step="0.1" value={voiceTuning.pitch} onChange={event => updateVoiceTuning({ pitch: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /></div>
               <div className="py-4"><p className="text-sm font-medium">AI provider</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">{providerStatusQuery.data?.ready ? `${providerStatusQuery.data.label} is ready with ${providerStatusQuery.data.model}. AXIS exposes only configured, owner-approved providers.` : "No-billing safe mode is active. Add the server-only OmniRoute URL and token to enable live responses."}</p><div className="mt-3 flex flex-wrap gap-2">{providerStatusQuery.data?.eligibleProviders.map(provider => <button key={provider.id} onClick={() => void saveConversationProvider(provider.id)} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium", conversationQuery.data?.conversation.provider === provider.id ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{provider.label}</button>)}</div></div>
+              <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">CSV files</p><p className="axis-muted-copy mt-0.5 text-xs">View, rename, or remove CSV uploads that belong to this private account.</p></div><button onClick={openCsvManager} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium" aria-label="Manage private CSV files">Manage</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Export private data</p><p className="axis-muted-copy mt-0.5 text-xs">Download chats, projects, settings, and file metadata.</p></div><button onClick={() => void exportWorkspace()} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Export workspace"><Download className="size-4" /></button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="axis-danger-label text-sm font-medium">Delete workspace data</p><p className="axis-muted-copy mt-0.5 text-xs">Permanently remove private chats, projects, settings, and file references.</p></div><button onClick={() => void deleteWorkspace()} className="axis-danger-action rounded-xl border px-3 py-2 text-xs font-medium">Delete</button></div>
             </div>
@@ -872,6 +935,7 @@ export default function Home() {
               <CommandRow icon={<Plus className="size-4" />} label="New chat" detail="Start a private conversation" onClick={() => { startNewConversation(); setCommandOpen(false); }} />
               <CommandRow icon={<FolderKanban className="size-4" />} label="New project" detail="Create and pin a private project" onClick={() => { void createNewProject(); setCommandOpen(false); }} />
               <CommandRow icon={<Paperclip className="size-4" />} label="Upload file" detail="Attach a private document or image" onClick={() => { fileInputRef.current?.click(); setCommandOpen(false); }} />
+              <CommandRow icon={<FileText className="size-4" />} label="Manage CSV files" detail="View, rename, or remove private CSV uploads" onClick={() => { openCsvManager(); setCommandOpen(false); }} />
               <CommandRow icon={<Settings className="size-4" />} label="Workspace settings" detail="Theme, privacy, memory, and export" onClick={() => { setSettingsOpen(true); setCommandOpen(false); }} />
               <CommandRow icon={<PanelLeftClose className="size-4" />} label={focusMode ? "Exit focus mode" : "Enter focus mode"} detail="Reduce workspace distractions" onClick={() => { setFocusMode(current => !current); setCommandOpen(false); }} />
               <p className="axis-muted-copy px-3 pb-2 pt-5 font-mono text-[10px] uppercase tracking-[0.16em]">Recent chats</p>
@@ -895,6 +959,37 @@ export default function Home() {
           </div>
         </div>
       )}
+      {csvManagerOpen && (
+        <div className="axis-overlay fixed inset-0 z-[70] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Manage private CSV files" onMouseDown={() => setCsvManagerOpen(false)}>
+          <div className="axis-command flex max-h-[min(680px,calc(100vh-2rem))] w-full max-w-2xl flex-col overflow-hidden rounded-3xl border" onMouseDown={event => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4 border-b px-5 py-4 sm:px-6"><div><p className="axis-muted-copy font-mono text-[10px] uppercase tracking-[0.16em]">Private file manager</p><h3 className="mt-1 text-lg font-semibold">CSV files</h3><p className="axis-muted-copy mt-1 text-xs leading-5">Only CSV uploads from your signed-in AXIS account appear here.</p></div><button onClick={() => setCsvManagerOpen(false)} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Close CSV file manager"><X className="size-4" /></button></div>
+            <div className="axis-scroll-region min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
+              {csvFilesQuery.isLoading ? (
+                <div className="space-y-3"><div className="axis-skeleton h-20 rounded-2xl" /><div className="axis-skeleton h-20 rounded-2xl" /></div>
+              ) : csvFilesQuery.isError ? (
+                <div className="rounded-2xl border border-red-400/20 bg-red-400/5 p-4 text-sm"><p>CSV files could not be loaded.</p><button onClick={() => void csvFilesQuery.refetch()} className="axis-danger-label mt-2 text-xs font-semibold">Try again</button></div>
+              ) : csvFilesQuery.data?.length ? (
+                <div className="space-y-3">
+                  {csvFilesQuery.data.map(file => (
+                    <article key={file.id} className="axis-settings-card rounded-2xl border p-4">
+                      <div className="flex items-start gap-3"><div className="axis-accent-mark grid size-9 shrink-0 place-items-center rounded-xl"><FileText className="size-4" /></div><div className="min-w-0 flex-1">{csvRenameId === file.id ? <input autoFocus value={csvRenameValue} onChange={event => setCsvRenameValue(event.target.value)} onKeyDown={event => { if (event.key === "Enter") void saveCsvRename(); if (event.key === "Escape") { setCsvRenameId(null); setCsvRenameValue(""); } }} className="axis-input h-9 w-full rounded-lg border px-2 text-sm outline-none" aria-label="CSV file name" /> : <p className="truncate text-sm font-medium">{file.fileName}</p>}<p className="axis-muted-copy mt-1 text-xs">{Math.max(1, Math.round(file.sizeBytes / 1024))} KB · Uploaded {formatRelativeDate(file.createdAt)}</p></div></div>
+                      <div className="mt-4 flex justify-end gap-2">{csvRenameId === file.id ? <><button onClick={() => { setCsvRenameId(null); setCsvRenameValue(""); }} className="axis-toolbar-control rounded-lg px-3 py-1.5 text-xs">Cancel</button><button onClick={() => void saveCsvRename()} disabled={renameCsvFile.isPending || !csvRenameValue.trim()} className="axis-primary-control rounded-lg px-3 py-1.5 text-xs disabled:opacity-50">Save name</button></> : <><button onClick={() => beginCsvRename(file)} className="axis-toolbar-control inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs"><Pencil className="size-3" /> Rename</button><button onClick={() => setCsvDeleteTarget({ id: file.id, fileName: file.fileName })} className="axis-danger-action inline-flex items-center gap-1.5 rounded-lg border px-3 py-1.5 text-xs"><Trash2 className="size-3" /> Delete</button></>}</div>
+                    </article>
+                  ))}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-dashed border-white/15 p-7 text-center"><FileText className="axis-accent-icon mx-auto size-5" /><p className="mt-3 text-sm font-medium">No private CSV files yet</p><p className="axis-muted-copy mx-auto mt-2 max-w-sm text-xs leading-5">Upload a CSV from the composer to review its data with AXIS. It will appear here under your account.</p><button onClick={() => { setCsvManagerOpen(false); fileInputRef.current?.click(); }} className="axis-primary-control mt-4 rounded-xl px-4 py-2 text-xs font-medium">Upload CSV</button></div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+      <AlertDialog open={Boolean(csvDeleteTarget)} onOpenChange={open => { if (!open) setCsvDeleteTarget(null); }}>
+        <AlertDialogContent className="axis-command border">
+          <AlertDialogHeader><AlertDialogTitle>Delete private CSV file?</AlertDialogTitle><AlertDialogDescription>This removes the private file reference for <strong>{csvDeleteTarget?.fileName}</strong> from AXIS. This action cannot be undone.</AlertDialogDescription></AlertDialogHeader>
+          <AlertDialogFooter><AlertDialogCancel>Keep file</AlertDialogCancel><AlertDialogAction onClick={() => void removeCsvFile()} className="axis-danger-action border">Delete CSV</AlertDialogAction></AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </main>
   );
 }

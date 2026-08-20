@@ -310,6 +310,54 @@ export async function listAttachmentsForUser(userId: number): Promise<Attachment
     .limit(50);
 }
 
+export async function listCsvAttachmentsForUser(userId: number): Promise<Attachment[]> {
+  const db = await requireDb();
+  return db
+    .select()
+    .from(attachments)
+    .where(and(eq(attachments.userId, userId), eq(attachments.mimeType, "text/csv")))
+    .orderBy(desc(attachments.createdAt))
+    .limit(50);
+}
+
+export async function getCsvAttachmentForUser(userId: number, attachmentId: number): Promise<Attachment | undefined> {
+  const db = await requireDb();
+  const result = await db
+    .select()
+    .from(attachments)
+    .where(and(eq(attachments.id, attachmentId), eq(attachments.userId, userId), eq(attachments.mimeType, "text/csv")))
+    .limit(1);
+  return result[0];
+}
+
+function normalizeCsvFileName(fileName: string) {
+  const normalized = fileName.trim().slice(0, 251) || "Untitled CSV";
+  return normalized.toLowerCase().endsWith(".csv") ? normalized : `${normalized}.csv`;
+}
+
+export async function renameCsvAttachmentForUser(userId: number, attachmentId: number, fileName: string) {
+  const db = await requireDb();
+  const existing = await getCsvAttachmentForUser(userId, attachmentId);
+  if (!existing) return undefined;
+
+  await db
+    .update(attachments)
+    .set({ fileName: normalizeCsvFileName(fileName) })
+    .where(and(eq(attachments.id, attachmentId), eq(attachments.userId, userId), eq(attachments.mimeType, "text/csv")));
+  return getCsvAttachmentForUser(userId, attachmentId);
+}
+
+export async function deleteCsvAttachmentForUser(userId: number, attachmentId: number) {
+  const db = await requireDb();
+  const existing = await getCsvAttachmentForUser(userId, attachmentId);
+  if (!existing) return undefined;
+
+  await db
+    .delete(attachments)
+    .where(and(eq(attachments.id, attachmentId), eq(attachments.userId, userId), eq(attachments.mimeType, "text/csv")));
+  return existing;
+}
+
 export async function getAttachmentsByIds(
   userId: number,
   conversationId: number,

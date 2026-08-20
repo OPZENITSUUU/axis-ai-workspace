@@ -26,6 +26,9 @@ const dbMocks = vi.hoisted(() => ({
   exportWorkspaceForUser: vi.fn(),
   deleteWorkspaceDataForUser: vi.fn(),
   listAttachmentsForUser: vi.fn(),
+  listCsvAttachmentsForUser: vi.fn(),
+  renameCsvAttachmentForUser: vi.fn(),
+  deleteCsvAttachmentForUser: vi.fn(),
 }));
 
 vi.mock("./db", () => dbMocks);
@@ -72,6 +75,9 @@ describe("conversations router privacy", () => {
     });
     dbMocks.exportWorkspaceForUser.mockResolvedValue({ conversations: [], projects: [] });
     dbMocks.listAttachmentsForUser.mockResolvedValue([]);
+    dbMocks.listCsvAttachmentsForUser.mockResolvedValue([]);
+    dbMocks.renameCsvAttachmentForUser.mockResolvedValue({ id: 22, userId: 44, fileName: "renamed.csv", mimeType: "text/csv" });
+    dbMocks.deleteCsvAttachmentForUser.mockResolvedValue({ id: 22, userId: 44, fileName: "renamed.csv", mimeType: "text/csv" });
   });
 
   it("loads a conversation only through the authenticated user scope", async () => {
@@ -120,6 +126,30 @@ describe("conversations router privacy", () => {
     await caller.files.list();
 
     expect(dbMocks.listAttachmentsForUser).toHaveBeenCalledWith(44);
+  });
+
+  it("manages CSV metadata only through the authenticated user scope", async () => {
+    const caller = appRouter.createCaller(createContext(44));
+
+    await caller.files.listCsv();
+    await caller.files.renameCsv({ attachmentId: 22, fileName: "renamed.csv" });
+    await caller.files.deleteCsv({ attachmentId: 22, confirmation: "DELETE CSV" });
+
+    expect(dbMocks.listCsvAttachmentsForUser).toHaveBeenCalledWith(44);
+    expect(dbMocks.renameCsvAttachmentForUser).toHaveBeenCalledWith(44, 22, "renamed.csv");
+    expect(dbMocks.deleteCsvAttachmentForUser).toHaveBeenCalledWith(44, 22);
+  });
+
+  it("rejects unknown or improperly confirmed CSV deletion without exposing another user's data", async () => {
+    dbMocks.renameCsvAttachmentForUser.mockResolvedValueOnce(undefined);
+    dbMocks.deleteCsvAttachmentForUser.mockResolvedValueOnce(undefined);
+    const caller = appRouter.createCaller(createContext(55));
+
+    await expect(caller.files.renameCsv({ attachmentId: 22, fileName: "other.csv" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.files.deleteCsv({ attachmentId: 22, confirmation: "DELETE CSV" })).rejects.toMatchObject({ code: "NOT_FOUND" });
+    await expect(caller.files.deleteCsv({ attachmentId: 22, confirmation: "delete" as "DELETE CSV" })).rejects.toBeDefined();
+    expect(dbMocks.renameCsvAttachmentForUser).toHaveBeenCalledWith(55, 22, "other.csv");
+    expect(dbMocks.deleteCsvAttachmentForUser).toHaveBeenCalledWith(55, 22);
   });
 
   it("does not load messages or attachments when another user cannot access a conversation", async () => {

@@ -3,16 +3,19 @@ import { z } from "zod";
 import {
   createConversation,
   createProject,
+  deleteCsvAttachmentForUser,
   deleteWorkspaceDataForUser,
   deleteProjectForUser,
   exportWorkspaceForUser,
   getAttachmentsForConversation,
   getConversationForUser,
+  listCsvAttachmentsForUser,
   getMessagesForConversation,
   getUserSettings,
   listConversationsForUser,
   listAttachmentsForUser,
   listProjectsForUser,
+  renameCsvAttachmentForUser,
   renameConversation,
   setConversationProvider,
   setConversationProject,
@@ -86,6 +89,21 @@ export const appRouter = router({
   }),
   files: router({
     list: protectedProcedure.query(({ ctx }) => listAttachmentsForUser(ctx.user.id)),
+    listCsv: protectedProcedure.query(({ ctx }) => listCsvAttachmentsForUser(ctx.user.id)),
+    renameCsv: protectedProcedure
+      .input(z.object({ attachmentId: z.number().int().positive(), fileName: z.string().trim().min(1).max(255) }))
+      .mutation(async ({ ctx, input }) => {
+        const attachment = await renameCsvAttachmentForUser(ctx.user.id, input.attachmentId, input.fileName);
+        if (!attachment) throw new TRPCError({ code: "NOT_FOUND", message: "CSV file not found" });
+        return attachment;
+      }),
+    deleteCsv: protectedProcedure
+      .input(z.object({ attachmentId: z.number().int().positive(), confirmation: z.literal("DELETE CSV") }))
+      .mutation(async ({ ctx, input }) => {
+        const attachment = await deleteCsvAttachmentForUser(ctx.user.id, input.attachmentId);
+        if (!attachment) throw new TRPCError({ code: "NOT_FOUND", message: "CSV file not found" });
+        return { success: true } as const;
+      }),
   }),
   conversations: router({
     list: protectedProcedure.query(({ ctx }) => listConversationsForUser(ctx.user.id)),

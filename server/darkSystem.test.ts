@@ -56,6 +56,10 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("Private conversation export is ready.");
     expect(home).toContain("/image");
     expect(home).toContain("text/csv");
+    expect(home).toContain("Private file manager");
+    expect(home).toContain("Manage private CSV files");
+    expect(home).toContain("DELETE CSV");
+    expect(home).toContain("Only CSV uploads from your signed-in AXIS account appear here.");
     expect(home).toContain("Browser voice tuning");
     expect(home).toContain("axis:voice-tuning:");
     expect(home).toContain("utterance.rate = voiceTuning.rate");
