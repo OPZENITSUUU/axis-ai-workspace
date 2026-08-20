@@ -66,6 +66,12 @@ The subsequent 375×812 glass-chat interaction review confirms the composer rema
 
 At 1280×720, the latest private-export refinement adds a contained Export control beside search, focus, and settings in the desktop top bar. It remains legible against the midnight-glass header without disrupting the existing responsive composer or empty-state actions.
 
+The retained signed-in desktop session was revisited on 20 August 2026 with a settled private conversation containing long Markdown, lists, tables, multiple assistant action bars, and the latest connection-check pair. Opening Settings kept the conversation visible beneath the translucent overlay and exposed account-synced appearance, typography, accent, memory, privacy, preferred-model, provider, export, and guarded-delete controls without changing any stored value. Tablet and mobile interactive-overlay checks remain separately open because they require the same signed-in browser session at those viewport dimensions.
+
+The same retained desktop session also confirmed the command palette: its centered smoky-glass overlay keeps private workspace actions, the current conversation, projects, and files grouped under a keyboard-focusable search field while the settled conversation remains visually de-emphasized underneath. No command was activated and no private data was changed during this review.
+
+The latest local responsive review confirmed the private assistant-mode badge is contained in the desktop top bar, while the composer keeps file, camera-aware attachment, browser voice, Voice Focus, tools, and send controls in a single aligned row. At 375×812, the safe-bottom composer keeps attachment, camera, voice, tools, and send actions accessible without clipping; the desktop-only Voice Focus entry intentionally moves out of the compact mobile dock rather than shrinking touch targets.
+
 ## 2026-08-20 — Signed-in desktop conversation and overlay evidence
 
 With the retained signed-in AXIS owner session, the settled `Heello` conversation displayed persisted user and assistant messages, including the completed `AXIS connection check` pair, above the anchored composer and online/synced status. The private settings drawer then opened as a readable midnight-glass panel with account-synced appearance, font, accent, memory, privacy, preferred-model, provider, export, and deletion controls; it preserved the underlying conversation without layout displacement.

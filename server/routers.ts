@@ -31,6 +31,7 @@ const settingsSchema = z.object({
   theme: z.enum(["light", "dark", "system"]).optional(),
   fontSize: z.enum(["compact", "comfortable", "large"]).optional(),
   accent: z.enum(["lime", "sky", "violet"]).optional(),
+  assistantMode: z.enum(["balanced", "study", "developer", "creative"]).optional(),
   preferredModel: z.string().trim().max(128).nullable().optional(),
   memoryEnabled: z.boolean().optional(),
   privacy: z.enum(["strict", "standard"]).optional(),

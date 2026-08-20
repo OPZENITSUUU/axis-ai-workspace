@@ -37,3 +37,19 @@ AXIS deliberately does not add the reference’s client-side Gemini-key storage,
 The Pro Edition reference contributed a contextual **Export** action and `/image` command discovery. AXIS now exports only the currently open private conversation as a local Markdown file, with clear `You` and `AXIS` sections. The original account-level private workspace export remains available in Settings for users who need their chats, projects, settings, and file metadata together.
 
 AXIS recognizes `/image <description>` as an image-generation intent without sending it to an unapproved provider. Until an owner-approved, server-side image provider is integrated, AXIS leaves the prompt in the user’s private draft and gives explicit setup guidance. This intentionally excludes the reference’s direct Pollinations URL pattern, direct browser Gemini call, and any browser-held provider credential. Existing Streamdown rendering continues to handle AXIS Markdown and code presentation without adding external CDN scripts to the application shell.
+
+## Cyber, Voice, Canvas, and Ultimate reference update
+
+The four later references contributed a richer interaction vocabulary without changing AXIS’s privacy model. AXIS now offers an **account-synced assistant mode**—Balanced, Study, Developer, or Creative—inside Settings. The selected style is resolved server-side into a fixed AXIS instruction before a private conversation streams; it is not a browser-held system prompt, API key, or model endpoint selector.
+
+The composer now adds a camera-aware private attachment entry. On supporting mobile browsers it requests an environment-facing image capture through the normal file chooser, then routes the selected image through the existing authenticated, user-scoped attachment upload path. Browser voice input remains explicit and review-first. A new Voice Focus overlay explains that speech stays in the editable draft until the user decides to send it; it does not create an automatic hands-free completion loop.
+
+| Reference capability | AXIS equivalent | Privacy and safety boundary |
+|---|---|---|
+| Persona/mode selector | Account-synced Balanced, Study, Developer, and Creative response styles. | A server-controlled instruction is added at stream time; no provider credentials reach the browser. |
+| Camera scan | Camera-aware private image attachment control. | Uses the existing authenticated attachment flow; no live video stream or unscoped media URL is created. |
+| Voice call visualizer | Browser-gated Voice Focus with review-before-send messaging. | No auto-submit, no autonomous recursive listening, and no direct browser provider request. |
+| Live code canvas | Existing Markdown/code rendering only. | AXIS does not execute arbitrary assistant HTML/JavaScript in an unsandboxed iframe. |
+| Search and image toggles | Existing private research and safe `/image` discovery. | Inactive provider routes remain unavailable until separately approved and server-side integrated. |
+
+The references’ direct API-key local storage, direct Gemini and image-service calls, one-click chat clearing, unsandboxed live-code execution, and automatic voice-to-provider loops remain intentionally excluded.

@@ -43,6 +43,7 @@ export const themePreference = mysqlEnum("theme_preference", ["light", "dark", "
 export const fontSizePreference = mysqlEnum("font_size_preference", ["compact", "comfortable", "large"]);
 export const accentPreference = mysqlEnum("accent_preference", ["lime", "sky", "violet"]);
 export const privacyMode = mysqlEnum("privacy_mode", ["strict", "standard"]);
+export const assistantModePreference = mysqlEnum("assistant_mode", ["balanced", "study", "developer", "creative"]);
 
 export const userSettings = mysqlTable(
   "user_settings",
@@ -52,6 +53,7 @@ export const userSettings = mysqlTable(
     theme: themePreference.notNull().default("light"),
     fontSize: fontSizePreference.notNull().default("comfortable"),
     accent: accentPreference.notNull().default("lime"),
+    assistantMode: assistantModePreference.notNull().default("balanced"),
     preferredModel: varchar("preferredModel", { length: 128 }),
     memoryEnabled: boolean("memoryEnabled").notNull().default(true),
     privacy: privacyMode.notNull().default("strict"),

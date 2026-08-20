@@ -1,0 +1,1 @@
+ALTER TABLE `user_settings` ADD `assistant_mode` enum('balanced','study','developer','creative') DEFAULT 'balanced' NOT NULL;

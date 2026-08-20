@@ -6,6 +6,7 @@ const db = vi.hoisted(() => ({
   getAttachmentsByIds: vi.fn(),
   getConversationForUser: vi.fn(),
   getMessagesForConversation: vi.fn(),
+  getUserSettings: vi.fn(),
   renameConversation: vi.fn(),
 }));
 const gateway = vi.hoisted(() => ({ getOmniRouteReadiness: vi.fn().mockResolvedValue({ ready: true }) }));
@@ -34,6 +35,7 @@ describe("AXIS chat route persistence", () => {
     db.getConversationForUser.mockResolvedValue(conversation);
     db.getAttachmentsByIds.mockResolvedValue([]);
     db.getMessagesForConversation.mockResolvedValue([]);
+    db.getUserSettings.mockResolvedValue({ assistantMode: "balanced" });
     db.createMessage.mockResolvedValue({});
 
     const writes: string[] = [];

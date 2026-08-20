@@ -144,4 +144,6 @@
 - [x] Evaluate and safely integrate applicable glass-chat reference improvements, including private message actions and voice interaction feedback, without browser-held provider keys or destructive chat clearing (browser-gated voice draft input, private Listen/Copy actions, responsive evidence, and no-client-key boundary documented).
 - [x] Publish the latest sanitized AXIS voice and assistant-message interaction refinement to the public GitHub repository (verified public commit `e1d1e49`).
 - [x] Evaluate and safely integrate applicable Pro Edition reference improvements for private conversation export and image-generation discovery without direct browser provider calls, client keys, or unvetted image URLs (private Markdown conversation export, safe `/image` discovery, existing Streamdown code presentation, and exclusions documented).
-- [ ] Publish the latest sanitized AXIS Pro Edition reference integration to the public GitHub repository.
+- [x] Publish the latest sanitized AXIS Pro Edition reference integration to the public GitHub repository (verified public commit `f4107a2`).
+- [x] Integrate safe AXIS equivalents from the Cyber, Voice, Canvas, and Ultimate references: account-synced persona context, quick prompts, camera-aware private attachment capture, and a browser-gated voice-focus state—while excluding direct client keys, auto-paid generation, and live arbitrary-code execution.
+- [ ] Publish the latest sanitized AXIS account-synced mode, private camera attachment, and Voice Focus implementation to the public GitHub repository.

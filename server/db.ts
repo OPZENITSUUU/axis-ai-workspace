@@ -217,7 +217,7 @@ export async function getUserSettings(userId: number): Promise<UserSettings> {
 
 export async function updateUserSettings(
   userId: number,
-  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "preferredModel" | "memoryEnabled" | "privacy">>,
+  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "assistantMode" | "preferredModel" | "memoryEnabled" | "privacy">>,
 ) {
   const db = await requireDb();
   await getUserSettings(userId);

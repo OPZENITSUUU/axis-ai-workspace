@@ -8,9 +8,11 @@ import {
   getAttachmentsByIds,
   getConversationForUser,
   getMessagesForConversation,
+  getUserSettings,
   renameConversation,
 } from "./db";
 import { ChatTurn } from "./geminiProvider";
+import { getAssistantModeInstruction } from "./assistantMode";
 import { getProviderStatus, isProviderId, streamModelResponse } from "./modelProvider";
 import { getOmniRouteReadiness } from "./omniRouteProvider";
 import { sdk } from "./_core/sdk";
@@ -181,13 +183,20 @@ export function registerChatRoutes(app: Express) {
       res.on("close", () => controller.abort());
 
       sendEvent(res, "conversation", { id: conversation.id, title: conversation.title });
-      const previousMessages = await getMessagesForConversation(user.id, conversation.id);
+      const [previousMessages, settings] = await Promise.all([
+        getMessagesForConversation(user.id, conversation.id),
+        getUserSettings(user.id),
+      ]);
       await createMessage(user.id, conversation.id, "user", content);
 
-      const modelTurns: ChatTurn[] = previousMessages.map(message => ({
-        role: message.role === "assistant" ? "model" : "user",
+      const historicalTurns: ChatTurn[] = previousMessages.map(message => ({
+        role: message.role === "assistant" ? "model" : "user" as "user",
         parts: [{ text: message.content }],
       }));
+      const modelTurns: ChatTurn[] = [{
+        role: "user",
+        parts: [{ text: getAssistantModeInstruction(settings.assistantMode) }],
+      }, ...historicalTurns];
 
       const messageParts: ChatTurn["parts"] = [{ text: content }];
       for (const attachment of attachments) {

@@ -13,6 +13,7 @@ import { Streamdown } from "streamdown";
 import {
   ArrowUp,
   Bot,
+  Camera,
   Check,
   Command,
   Copy,
@@ -134,7 +135,9 @@ export default function Home() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<"saved" | "draft">("saved");
   const [isListening, setIsListening] = useState(false);
+  const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
   const streamLifecycleRef = useRef(createChatSubmissionLifecycle());
   const voiceRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
@@ -183,6 +186,7 @@ export default function Home() {
       if (event.key === "Escape") {
         setCommandOpen(false);
         setSettingsOpen(false);
+        setVoiceFocusOpen(false);
       }
     };
     window.addEventListener("keydown", handleKeyboardShortcut);
@@ -710,7 +714,8 @@ export default function Home() {
               <h2 className="mt-0.5 truncate text-sm font-semibold tracking-[-0.02em]">{conversationQuery.data?.conversation.title || "New conversation"}</h2>
             </div>
           </div>
-          <div className="flex items-center gap-1">
+            <div className="flex items-center gap-1">
+            <span className="axis-muted-copy hidden rounded-full border border-white/10 px-2 py-1 text-[10px] capitalize lg:inline-flex">{settingsQuery.data?.assistantMode || "balanced"}</span>
             <button onClick={exportConversation} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex" aria-label="Export current private conversation"><Download className="size-3.5" /> Export</button>
             <button onClick={() => setCommandOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex"><Search className="size-3.5" /> Search <kbd className="rounded border border-current/20 px-1 font-mono text-[9px]">⌘K</kbd></button>
             <button onClick={() => setFocusMode(current => !current)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex"><PanelLeftClose className="size-3.5" /> {focusMode ? "Exit focus" : "Focus"}</button>
@@ -762,8 +767,11 @@ export default function Home() {
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
+                    <input ref={cameraInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Attach file"><Paperclip className="size-4" /></button>
+                    <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Capture a private photo"><Camera className="size-4" /></button>
                     <button type="button" onClick={toggleVoiceInput} aria-pressed={isListening} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", isListening && "axis-voice-recording")} aria-label={isListening ? "Stop voice input" : "Start voice input"}>{isListening ? <Square className="size-3.5" /> : <Mic className="size-4" />}</button>
+                    <button type="button" onClick={() => setVoiceFocusOpen(true)} className="axis-icon-control hidden size-10 place-items-center rounded-xl transition-colors sm:grid sm:size-9" aria-label="Open voice focus"><Volume2 className="size-4" /></button>
                     <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
                     <span className="axis-muted-copy hidden text-[11px] sm:block">Enter to send · Shift + Enter for new line</span>
                   </div>
@@ -790,6 +798,7 @@ export default function Home() {
               <MobileAction icon={<Search className="size-4" />} label="Search" onClick={() => { setCommandOpen(true); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Plus className="size-4" />} label="New chat" onClick={startNewConversation} />
               <MobileAction icon={<Paperclip className="size-4" />} label="Upload file" onClick={() => { fileInputRef.current?.click(); setMobileSheetOpen(false); }} />
+              <MobileAction icon={<Camera className="size-4" />} label="Camera" onClick={() => { cameraInputRef.current?.click(); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Download className="size-4" />} label="Export chat" onClick={() => { exportConversation(); setMobileSheetOpen(false); }} />
             </div>
           </div>
@@ -804,6 +813,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Appearance</p><p className="axis-muted-copy mt-0.5 text-xs">Theme is synced to this private account.</p></div><button onClick={() => { toggleTheme?.(); void saveSetting({ theme: theme === "light" ? "dark" : "light" }); }} className="axis-icon-control grid size-9 place-items-center rounded-xl">{theme === "light" ? <Moon className="size-4" /> : <Sun className="size-4" />}</button></div>
               <div className="py-4"><p className="text-sm font-medium">Font size</p><div className="mt-3 flex gap-2">{(["compact", "comfortable", "large"] as const).map(size => <button key={size} onClick={() => void saveSetting({ fontSize: size })} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs capitalize", settingsQuery.data?.fontSize === size ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{size}</button>)}</div></div>
               <div className="py-4"><p className="text-sm font-medium">Accent</p><div className="mt-3 flex gap-2">{(["lime", "sky", "violet"] as const).map(accent => <button key={accent} onClick={() => void saveSetting({ accent })} className={cn("size-8 rounded-full border-2 transition-transform hover:scale-105", accent === "lime" ? "bg-[#d7fa8a]" : accent === "sky" ? "bg-[#a7dcff]" : "bg-[#d6b4ff]", settingsQuery.data?.accent === accent ? "border-[#20231d]" : "border-transparent")} aria-label={`${accent} accent`} />)}</div></div>
+              <div className="py-4"><p className="text-sm font-medium">Assistant mode</p><p className="axis-muted-copy mt-0.5 text-xs">A private account-synced response style; AXIS keeps the same server-side provider boundary.</p><div className="mt-3 flex flex-wrap gap-2">{(["balanced", "study", "developer", "creative"] as const).map(mode => <button key={mode} onClick={() => void saveSetting({ assistantMode: mode })} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs capitalize", settingsQuery.data?.assistantMode === mode ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{mode}</button>)}</div></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Memory</p><p className="axis-muted-copy mt-0.5 text-xs">Use earlier messages in the same private chat.</p></div><button onClick={() => void saveSetting({ memoryEnabled: !settingsQuery.data?.memoryEnabled })} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", settingsQuery.data?.memoryEnabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{settingsQuery.data?.memoryEnabled ? "On" : "Off"}</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Privacy</p><p className="axis-muted-copy mt-0.5 text-xs">Strict keeps all workspace access user-scoped.</p></div><button onClick={() => void saveSetting({ privacy: settingsQuery.data?.privacy === "strict" ? "standard" : "strict" })} className="axis-settings-choice axis-settings-choice-inactive rounded-lg px-3 py-1.5 text-xs font-medium">{settingsQuery.data?.privacy || "strict"}</button></div>
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
@@ -832,6 +842,17 @@ export default function Home() {
               <p className="axis-muted-copy px-3 pb-2 pt-5 font-mono text-[10px] uppercase tracking-[0.16em]">Private files</p>
               {filesQuery.data?.filter(file => file.fileName.toLowerCase().includes(commandQuery.toLowerCase())).slice(0, 5).map(file => <CommandRow key={file.id} icon={<FileText className="size-4" />} label={file.fileName} detail={`${file.mimeType.replace("application/", "")} · ${Math.max(1, Math.round(file.sizeBytes / 1024))} KB`} onClick={() => { chooseConversation(file.conversationId); setCommandOpen(false); }} />)}
             </div>
+          </div>
+        </div>
+      )}
+      {voiceFocusOpen && (
+        <div className="axis-overlay fixed inset-0 z-[70] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Voice focus" onMouseDown={() => setVoiceFocusOpen(false)}>
+          <div className="axis-command w-full max-w-md rounded-3xl border p-6 text-center" onMouseDown={event => event.stopPropagation()}>
+            <div className={cn("axis-accent-mark mx-auto grid size-16 place-items-center rounded-full", isListening && "axis-voice-recording")}><Mic className="size-6" /></div>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em]">Private voice focus</p>
+            <h3 className="mt-2 text-xl font-semibold">Speak, review, then send</h3>
+            <p className="axis-muted-copy mt-3 text-sm leading-6">Your browser asks for microphone permission. AXIS adds the transcript to the private draft and never auto-sends it.</p>
+            <div className="mt-6 flex justify-center gap-3"><button onClick={toggleVoiceInput} className="axis-primary-control rounded-xl px-4 py-2 text-sm font-medium">{isListening ? "Stop listening" : "Start listening"}</button><button onClick={() => setVoiceFocusOpen(false)} className="axis-toolbar-control rounded-xl px-4 py-2 text-sm">Close</button></div>
           </div>
         </div>
       )}

@@ -49,6 +49,9 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("SpeechRecognition");
     expect(home).toContain("navigator.clipboard.writeText");
     expect(home).toContain("speechSynthesis");
+    expect(home).toContain("Private voice focus");
+    expect(home).toContain('capture="environment"');
+    expect(home).toContain("assistantMode");
     expect(home).toContain("exportConversation");
     expect(home).toContain("Private conversation export is ready.");
     expect(home).toContain("/image");
