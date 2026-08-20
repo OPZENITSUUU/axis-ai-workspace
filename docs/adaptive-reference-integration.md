@@ -53,3 +53,18 @@ The composer now adds a camera-aware private attachment entry. On supporting mob
 | Search and image toggles | Existing private research and safe `/image` discovery. | Inactive provider routes remain unavailable until separately approved and server-side integrated. |
 
 The references’ direct API-key local storage, direct Gemini and image-service calls, one-click chat clearing, unsandboxed live-code execution, and automatic voice-to-provider loops remain intentionally excluded.
+
+## Analytics Pro reference update
+
+The latest Analytics Pro reference added two compatible refinements. AXIS now accepts **CSV** alongside its existing private PDF, TXT, Markdown, and image attachments. A CSV follows the same authenticated upload route as every other attachment, is stored under the signed-in user and conversation, and is text-extracted for the already-approved private chat stream. This enables table and dataset discussion without creating a public file link, client-side analytics endpoint, or a new provider route.
+
+AXIS also adds **Browser voice tuning** in Settings. Speech rate and pitch affect only the existing local `Listen` action and are saved only in that signed-in browser’s local preference space. The controls do not transmit voice audio, tuning preferences, or assistant messages to an additional AI service; they simply configure the browser speech-synthesis utterance after the user selects Listen.
+
+| Analytics Pro reference idea | AXIS equivalent | Intentionally excluded |
+|---|---|---|
+| CSV/document analysis | Private CSV attachment through the existing authenticated upload and user-scoped conversation flow. | Public dataset URLs, browser-held provider keys, and direct browser model calls. |
+| Voice speed and pitch | Browser-local tuning for the existing assistant Listen action. | Autonomous voice-call sessions, background recording, and auto-send behavior. |
+| Analytics charts | Assistant Markdown can explain or format uploaded data within the ordinary private chat flow. | A client-side chart runtime that fetches data or makes external analytics requests outside AXIS authorization. |
+| Live canvas preview | Existing Markdown and code presentation remains available. | Rendering assistant-generated HTML/JavaScript in an unsandboxed iframe. |
+
+Validation after this update passed the TypeScript check and the full suite with **47 active tests passing** and one deliberately skipped external credential probe. Desktop and mobile workspace captures continued to show a stable composer and responsive layout.

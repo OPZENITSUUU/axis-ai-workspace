@@ -78,10 +78,19 @@ const supportedFileTypes = new Set([
   "application/pdf",
   "text/plain",
   "text/markdown",
+  "text/csv",
   "image/jpeg",
   "image/png",
   "image/webp",
 ]);
+
+const defaultVoiceTuning = { rate: 1, pitch: 1 };
+
+function clampVoiceTuning(value: unknown, minimum: number, maximum: number, fallback: number) {
+  const numeric = typeof value === "number" ? value : Number(value);
+  if (!Number.isFinite(numeric)) return fallback;
+  return Math.min(maximum, Math.max(minimum, numeric));
+}
 
 function getAuthenticatedHeaders() {
   const headers: Record<string, string> = { "Content-Type": "application/json" };
@@ -136,6 +145,7 @@ export default function Home() {
   const [draftStatus, setDraftStatus] = useState<"saved" | "draft">("saved");
   const [isListening, setIsListening] = useState(false);
   const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
+  const [voiceTuning, setVoiceTuning] = useState(defaultVoiceTuning);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const cameraInputRef = useRef<HTMLInputElement>(null);
   const messageEndRef = useRef<HTMLDivElement>(null);
@@ -217,6 +227,19 @@ export default function Home() {
     }, 420);
     return () => window.clearTimeout(timer);
   }, [draft, user?.id, activeConversationId]);
+
+  useEffect(() => {
+    if (!user) return;
+    try {
+      const stored = JSON.parse(localStorage.getItem(`axis:voice-tuning:${user.id}`) || "{}") as Partial<typeof defaultVoiceTuning>;
+      setVoiceTuning({
+        rate: clampVoiceTuning(stored.rate, 0.5, 1.8, defaultVoiceTuning.rate),
+        pitch: clampVoiceTuning(stored.pitch, 0.5, 1.5, defaultVoiceTuning.pitch),
+      });
+    } catch {
+      setVoiceTuning(defaultVoiceTuning);
+    }
+  }, [user?.id]);
 
   const ensureConversation = async () => {
     if (activeConversationId) return activeConversationId;
@@ -357,7 +380,7 @@ export default function Home() {
   const handleFileSelect = async (file: File | undefined) => {
     if (!file) return;
     if (!supportedFileTypes.has(file.type)) {
-      toast.error("Use a PDF, TXT, Markdown, PNG, JPEG, or WebP attachment.");
+      toast.error("Use a PDF, TXT, Markdown, CSV, PNG, JPEG, or WebP attachment.");
       return;
     }
     if (file.size > 10 * 1024 * 1024) {
@@ -401,6 +424,19 @@ export default function Home() {
     }
   };
 
+  const updateVoiceTuning = (next: Partial<typeof defaultVoiceTuning>) => {
+    const updated = {
+      rate: clampVoiceTuning(next.rate ?? voiceTuning.rate, 0.5, 1.8, defaultVoiceTuning.rate),
+      pitch: clampVoiceTuning(next.pitch ?? voiceTuning.pitch, 0.5, 1.5, defaultVoiceTuning.pitch),
+    };
+    setVoiceTuning(updated);
+    try {
+      localStorage.setItem(`axis:voice-tuning:${user?.id ?? "anonymous"}`, JSON.stringify(updated));
+    } catch {
+      // Voice tuning is a local browser preference; speech remains available without storage.
+    }
+  };
+
   const speakAssistantMessage = (content: string) => {
     if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
       toast.error("Text-to-speech is unavailable in this browser.");
@@ -409,6 +445,8 @@ export default function Home() {
     window.speechSynthesis.cancel();
     const utterance = new SpeechSynthesisUtterance(content);
     utterance.lang = navigator.language || "en-IN";
+    utterance.rate = voiceTuning.rate;
+    utterance.pitch = voiceTuning.pitch;
     window.speechSynthesis.speak(utterance);
     toast("Reading the assistant response aloud.");
   };
@@ -766,7 +804,7 @@ export default function Home() {
                 <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[68px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
-                    <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
+                    <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,.csv,text/csv,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
                     <input ref={cameraInputRef} type="file" accept="image/jpeg,image/png,image/webp" capture="environment" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Attach file"><Paperclip className="size-4" /></button>
                     <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Capture a private photo"><Camera className="size-4" /></button>
@@ -817,6 +855,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Memory</p><p className="axis-muted-copy mt-0.5 text-xs">Use earlier messages in the same private chat.</p></div><button onClick={() => void saveSetting({ memoryEnabled: !settingsQuery.data?.memoryEnabled })} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", settingsQuery.data?.memoryEnabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{settingsQuery.data?.memoryEnabled ? "On" : "Off"}</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Privacy</p><p className="axis-muted-copy mt-0.5 text-xs">Strict keeps all workspace access user-scoped.</p></div><button onClick={() => void saveSetting({ privacy: settingsQuery.data?.privacy === "strict" ? "standard" : "strict" })} className="axis-settings-choice axis-settings-choice-inactive rounded-lg px-3 py-1.5 text-xs font-medium">{settingsQuery.data?.privacy || "strict"}</button></div>
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
+              <div className="py-4"><p className="text-sm font-medium">Browser voice tuning</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Applies only to the private Listen action in this browser. AXIS does not send these controls or message audio to an AI provider.</p><label className="axis-muted-copy mt-3 block text-xs" htmlFor="voice-rate">Speech speed <span className="float-right font-mono">{voiceTuning.rate.toFixed(1)}×</span></label><input id="voice-rate" type="range" min="0.5" max="1.8" step="0.1" value={voiceTuning.rate} onChange={event => updateVoiceTuning({ rate: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /><label className="axis-muted-copy mt-4 block text-xs" htmlFor="voice-pitch">Speech pitch <span className="float-right font-mono">{voiceTuning.pitch.toFixed(1)}×</span></label><input id="voice-pitch" type="range" min="0.5" max="1.5" step="0.1" value={voiceTuning.pitch} onChange={event => updateVoiceTuning({ pitch: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /></div>
               <div className="py-4"><p className="text-sm font-medium">AI provider</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">{providerStatusQuery.data?.ready ? `${providerStatusQuery.data.label} is ready with ${providerStatusQuery.data.model}. AXIS exposes only configured, owner-approved providers.` : "No-billing safe mode is active. Add the server-only OmniRoute URL and token to enable live responses."}</p><div className="mt-3 flex flex-wrap gap-2">{providerStatusQuery.data?.eligibleProviders.map(provider => <button key={provider.id} onClick={() => void saveConversationProvider(provider.id)} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium", conversationQuery.data?.conversation.provider === provider.id ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{provider.label}</button>)}</div></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Export private data</p><p className="axis-muted-copy mt-0.5 text-xs">Download chats, projects, settings, and file metadata.</p></div><button onClick={() => void exportWorkspace()} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Export workspace"><Download className="size-4" /></button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="axis-danger-label text-sm font-medium">Delete workspace data</p><p className="axis-muted-copy mt-0.5 text-xs">Permanently remove private chats, projects, settings, and file references.</p></div><button onClick={() => void deleteWorkspace()} className="axis-danger-action rounded-xl border px-3 py-2 text-xs font-medium">Delete</button></div>

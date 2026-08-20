@@ -24,6 +24,7 @@ const ALLOWED_MIME_TYPES = new Set([
   "application/pdf",
   "text/plain",
   "text/markdown",
+  "text/csv",
   "image/jpeg",
   "image/png",
   "image/webp",
@@ -87,7 +88,7 @@ export function registerChatRoutes(app: Express) {
       }
 
       if (!ALLOWED_MIME_TYPES.has(mimeType)) {
-        res.status(415).json({ error: "Use a PDF, TXT, Markdown, PNG, JPEG, or WebP file." });
+        res.status(415).json({ error: "Use a PDF, TXT, Markdown, CSV, PNG, JPEG, or WebP file." });
         return;
       }
 
