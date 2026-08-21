@@ -1,5 +1,22 @@
 # Project TODO
 
+- [x] Add a private CSV file-management section where signed-in users can view, rename, and delete only their own uploaded CSV files with explicit deletion confirmation.
+- [x] Publish the latest sanitized AXIS private CSV file-management feature to the public GitHub repository (verified public commit `d60d199`).
+- [x] Verify whether Expo project `9e9beb82-2224-4e4e-b6b6-a67f7ca9e1d8` can safely link to the existing AXIS companion without replacing it (it cannot: the project belongs to the separate `opzenitsu69-` slug, so AXIS was restored unchanged).
+- [x] Verify a user-supplied short-lived Expo token securely, confirm project ownership, and submit the AXIS preview APK only after identity validation (personal token current-user test passed and the build completed).
+- [x] Replace the insufficient Expo robot token with the user’s personal-account token and revalidate its project permissions (personal `opzenitsu` owner token verified).
+- [x] Initialize the existing AXIS `axis-mobile` companion as a new personal `opzenitsu` Expo project and submit its preview APK build (project `b1ee2df9-96a8-4d00-b59d-6dde1b3adc66`; build completed).
+- [x] Inspect the owner-provided Expo build-usage export and record the AXIS preview APK build usage evidence (one Android Medium build on 2026-08-21; no other build classes recorded in the export window).
+- [x] Capture project-scoped Expo evidence explicitly tying the completed preview build to `@opzenitsu/axis-mobile` and build `4d209b28-68e6-42bb-9783-a9a467ed5a70` (finished Android internal-distribution APK; Expo reports 9m 17s total build time).
+- [x] Publish the latest sanitized AXIS personal Expo project configuration, build evidence, and credential-test source to the public GitHub repository (verified public commit `e6525c2`).
+- [x] Publish the latest sanitized authenticated-workspace and private CSV-manager validation documentation to the public GitHub repository (verified public commit `ef170fc`).
+- [x] Add an installable AXIS Progressive Web App with a web app manifest, branded icons, update-safe service worker, offline fallback, and browser install prompt.
+- [x] Publish the latest sanitized AXIS PWA implementation, manifest, service worker, tests, and installation guide to the public GitHub repository (verified public commit `29e6a41`).
+- [x] Correct and republish the authenticated AXIS tablet workspace validation documentation so it distinguishes development-preview layout evidence from authenticated deployed-browser evidence (verified public commit `b339671`).
+- [ ] Capture a true authenticated tablet viewport of the deployed AXIS workspace, including a settled private workspace or owner-provided redacted evidence.
+- [x] Remove the bottom online/synced badge and AI-disclaimer footer from AXIS web and Android companion chat screens, and let the composer use the reclaimed space (shared hosted workspace update verified at mobile viewport).
+- [ ] Publish the sanitized AXIS bottom-chat layout update and its regression coverage to the public GitHub repository.
+
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
 - [x] Select and configure a replacement model provider because GitHub Models was retired on 30 July 2026 (OmniRoute is the selected experimental primary route).
 - [x] Evaluate provider options against sustainable no-cost or low-cost use, response speed, streaming support, and reliability.
@@ -133,10 +150,10 @@
 - [x] Revalidate the supplied `https://context-gravel-childcare.ngrok-free.dev/v1` gateway after the owner restart and update AXIS activation status from the live result (the bounded non-billing `/v1/models` probe timed out without response bytes).
 - [x] Commit a concise duplicate-prevention validation note after the expanded lifecycle suite passes.
 - [x] Verify that the public AXIS GitHub repository contains the latest sanitized gateway-resilience and validation source updates (published commit `416e17b` includes the stream lifecycle, no-persistence readiness, regression tests, and recovery documentation).
-- [ ] Verify that the configured public `/v1` tunnel reaches the owner-reported HTTPS OmniRoute service on port 20128 and update AXIS readiness from the live result.
+- [x] Verify that the configured public `/v1` tunnel reaches the owner-reported HTTPS OmniRoute service on port 20128 and update AXIS readiness from the live result (guarded server-only `/v1/models` check passed in 6.4 seconds on 2026-08-20).
 - [x] Refine and validate the existing AXIS Expo Android companion as a secure, branded mobile shell for the published private workspace (dark loading/retry states, audio-only WebView permission handling, Android Back support, type-check, web export, and regression evidence).
 - [x] Publish the latest sanitized AXIS Android companion refinements to the existing public GitHub repository (verified public commit `2e3b620`).
-- [ ] Prepare and attempt a distributable Android APK build for the AXIS companion, documenting any signing or build-service requirement.
+- [x] Prepare and attempt a distributable Android APK build for the AXIS companion, documenting the successful personal Expo project setup, remote keystore creation, and completed preview APK build (`4d209b28-68e6-42bb-9783-a9a467ed5a70`).
 - [x] Assess the supplied OmniRoute chat, responses, media, files, search, and messages endpoints for safe per-user AXIS activation after public gateway reachability is restored (models and existing chat route validated; unapproved media, provider-file, responses, messages, and search routes remain inactive behind private activation prerequisites).
 - [x] Publish the latest sanitized gateway recovery evidence and Android APK build profile to the public AXIS GitHub repository (verified public commit `ef3e427`).
 - [x] Integrate the applicable safe-area, adaptive layout, accessibility, and responsive chat-surface improvements from `pasted_content.txt` while retaining server-only provider credentials (including a documented no-client-key boundary and verified mobile composer docking).
@@ -146,4 +163,6 @@
 - [x] Evaluate and safely integrate applicable Pro Edition reference improvements for private conversation export and image-generation discovery without direct browser provider calls, client keys, or unvetted image URLs (private Markdown conversation export, safe `/image` discovery, existing Streamdown code presentation, and exclusions documented).
 - [x] Publish the latest sanitized AXIS Pro Edition reference integration to the public GitHub repository (verified public commit `f4107a2`).
 - [x] Integrate safe AXIS equivalents from the Cyber, Voice, Canvas, and Ultimate references: account-synced persona context, quick prompts, camera-aware private attachment capture, and a browser-gated voice-focus state—while excluding direct client keys, auto-paid generation, and live arbitrary-code execution.
-- [ ] Publish the latest sanitized AXIS account-synced mode, private camera attachment, and Voice Focus implementation to the public GitHub repository.
+- [x] Publish the latest sanitized AXIS account-synced mode, private camera attachment, and Voice Focus implementation to the public GitHub repository (verified public commit `7da8e7d`).
+- [x] Integrate safe Analytics Pro reference equivalents for private CSV attachment analysis and controlled browser voice tuning, while excluding client keys, direct provider calls, live unsandboxed canvas execution, and autonomous voice loops.
+- [x] Publish the latest sanitized AXIS Analytics Pro reference integration to the public GitHub repository (verified public commit `c29d031`).

@@ -867,7 +867,7 @@ export default function Home() {
             </div>
           </div>
 
-          <div className="axis-composer-dock px-4 pb-5 pt-2 md:px-8 md:pb-7">
+          <div className="axis-composer-dock px-4 pb-2 pt-2 md:px-8 md:pb-4">
             <div className="mx-auto w-full max-w-3xl">
               {attachments.length > 0 && (
                 <div className="mb-2 flex flex-wrap gap-2">
@@ -875,7 +875,7 @@ export default function Home() {
                 </div>
               )}
               <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className="axis-composer rounded-2xl border p-2">
-                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[68px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:text-[15px]" disabled={isStreaming} />
+                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,.csv,text/csv,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
@@ -894,7 +894,6 @@ export default function Home() {
                 </div>
               </form>
               {providerStatusQuery.isSuccess && !providerStatusQuery.data?.ready && <p id="gateway-unavailable-hint" className="axis-warning-eyebrow mt-2 text-center text-xs">Chat is paused until the approved gateway is configured.</p>}
-              <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-center"><WorkspaceStatus state={isStreaming ? "syncing" : draftStatus === "draft" ? "draft" : providerStatusQuery.data?.ready ? "online" : "saved"} /><span className="axis-muted-copy text-[11px]">AI can make mistakes. Check important information.</span></div>
             </div>
           </div>
         </div>
@@ -1046,12 +1045,6 @@ function GatewayUnavailableCard({ onOpenSettings }: { onOpenSettings: () => void
 
 function CommandRow({ icon, label, detail, onClick }: { icon: React.ReactNode; label: string; detail: string; onClick: () => void }) {
   return <button onClick={onClick} className="axis-command-row flex w-full items-center gap-3 rounded-xl px-3 py-3 text-left transition-colors"><span className="axis-command-row-icon grid size-8 place-items-center rounded-lg shadow-sm">{icon}</span><span className="min-w-0 flex-1"><span className="block truncate text-sm font-medium">{label}</span><span className="block truncate text-xs text-[color:var(--axis-muted)]">{detail}</span></span></button>;
-}
-
-function WorkspaceStatus({ state }: { state: "online" | "syncing" | "draft" | "saved" }) {
-  const labels = { online: "Online · synced", syncing: "Syncing response", draft: "Draft saved soon", saved: "Draft saved locally" };
-  const tones = { online: "axis-status-positive", syncing: "axis-status-positive", draft: "axis-status-neutral", saved: "axis-status-neutral" };
-  return <span className={cn("inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-[10px] font-medium", tones[state])}><span className={cn("size-1.5 rounded-full", state === "syncing" ? "axis-status-dot-positive animate-pulse" : state === "online" ? "axis-status-dot-positive" : "axis-status-dot-neutral")} />{labels[state]}</span>;
 }
 
 function MobileAction({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
