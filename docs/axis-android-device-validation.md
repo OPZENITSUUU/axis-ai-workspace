@@ -29,6 +29,7 @@ Complete every row using the same signed-in account. Do not use a second user’
 | Settings and privacy | Open Settings, review theme/accent/privacy, then return to the workspace. | Settings remain responsive and account-scoped; no provider credential is displayed. | Screenshot of settings panel with sensitive fields absent. |
 | Research | Run a non-sensitive research query from the AXIS tool. | Results are linked into the current private draft context and are not published as shared history. | Screenshot of sources with query text redacted if necessary. |
 | Voice | Start voice input, accept Android microphone permission, record a short non-sensitive phrase, and stop. | Permission is requested only when used; transcription returns to the current private chat. | Screenshot of Android permission prompt or completed transcript. |
+| Background-task notification | Install AXIS 0.5.0, sign in, allow notifications, start a harmless background task, then background the app. | The device registers an Expo push token privately and receives a generic completion alert without task content. Tapping it returns to AXIS. | Redacted lock-screen or notification-drawer screenshot, plus an observed return to AXIS. |
 | Error recovery | Disable network briefly, observe the retry state, then restore network and retry. | The companion makes the recovery action obvious and restores the shell without exposing credentials. | Screenshot of retry state. |
 | Android Back | Open an in-workspace link or OAuth page, then press the Android system Back control once. | The companion returns through WebView history before Android exits the app. | Short redacted screen recording. |
 
@@ -40,20 +41,10 @@ The source and web-bundle validation was refreshed on 20 August 2026 after addin
 
 Record any failed row with Android version, Expo Go version, device/emulator model, a redacted screenshot, and the exact action that triggered it. The owner can then supply that evidence for a targeted AXIS fix.
 
-## Personal preview APK build
+## Distributable preview APK build handoff
 
-On 20 August 2026, AXIS was initialized as the owner’s **personal** Expo project, `@opzenitsu/axis-mobile`, with EAS project ID `b1ee2df9-96a8-4d00-b59d-6dde1b3adc66`. The previously supplied project ID was intentionally not reused because it belonged to a different app slug, `opzenitsu69-`; AXIS retains the `axis-mobile` app identity and Android package `space.manus.axis.mobile`.
+AXIS defines an internal-distribution Android **APK** profile in `mobile/axis-mobile/eas.json`. The current notification-capable preview is **AXIS 0.5.0**, completed as build `32890d61-13e5-4fe5-8938-c0c4313b0bb6` on 21 August 2026.
 
-The internal-distribution Android **preview APK** build completed successfully. Install it on an Android test device from the authenticated Expo build page:
+The matching Firebase Android client configuration is held as a private Expo build-server file variable named `GOOGLE_SERVICES_JSON`. The native config resolves its path only during the remote build. It is ignored locally and is not included in GitHub, the website, screenshots, or browser code. The Firebase service-account key is separately stored in Expo’s credential manager.
 
-```text
-https://expo.dev/accounts/opzenitsu/projects/axis-mobile/builds/4d209b28-68e6-42bb-9783-a9a467ed5a70
-```
-
-Expo generated and retained the remote Android signing keystore. The short-lived access token used for setup remains server-side and should be revoked in Expo once no further builds are needed. Completing the physical-device matrix above is still required before claiming native OAuth, microphone, file-picker, and WebView behavior as validated.
-
-## Build-usage export evidence
-
-The owner-provided Expo build-usage export covers 1 August through 1 September 2026. It contains **one Android Medium build** on `2026-08-21T00:00:00.000Z` and zero Android Large, iOS Medium, and iOS Large builds. The export is account-level and does not identify a project or build ID, so it does not independently attribute the row to AXIS; however, its single Android build entry is consistent with the completed AXIS preview APK submission in this period.
-
-Project-scoped Expo evidence then confirmed the attribution: build `4d209b28-68e6-42bb-9783-a9a467ed5a70` belongs to `@opzenitsu/axis-mobile`, is an **Android internal distribution** APK using the `preview` profile, and finished on 21 August 2026. Expo reports a total build time of **9 minutes 17 seconds** and a 13-day artifact availability window. This verifies the completed APK independently of the account-level CSV export.
+Install the resulting APK only on a test device, complete the validation matrix above, and retain only redacted evidence. The companion keeps AXIS credentials, private chat data, and provider traffic on the published AXIS backend.
