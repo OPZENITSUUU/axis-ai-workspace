@@ -155,6 +155,6 @@
 - [x] Build a new internal AXIS 0.4.0 preview APK containing the native companion theme refinement after release validation succeeds (build `fdaef745-a52b-4429-8cfc-e75256e16885`, completed).
 - [x] Verify the supplied editorial token refinement is visible on the deployed AXIS website at desktop and mobile workspace widths.
 - [x] Validate and add the owner-supplied `google-services.json` only to the AXIS Android native build configuration, then rebuild and verify secure FCM notification prerequisites without publishing Firebase files (AXIS 0.5.0 build `32890d61-13e5-4fe5-8938-c0c4313b0bb6` completed).
-- [ ] Restore the missing private web-to-native notification registration, background-task worker, and generic completion-alert integration against the existing user-scoped notification tables before physical-device testing.
+- [x] Restore the missing private web-to-native notification registration, background-task worker, and generic completion-alert integration against the existing user-scoped notification tables before physical-device testing.
 - [x] Replace all user-facing AXIS website references to "Voice Call" with "Voice Note" while preserving review-before-send voice behavior.
 - [x] Advance the AXIS service-worker cache after the Voice Note wording release so installed and browser clients refresh the deployed label.
