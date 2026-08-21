@@ -31,6 +31,7 @@
 - [x] Add account-scoped editable memory instructions and inject them server-side into future private conversations.
 - [x] Add a server-side `/url` summarizer with URL validation, private request handling, size/time bounds, and SSRF safeguards.
 - [x] Add a browser-local focus audio control with generated ambient noise and no external audio files, autoplay, or uploaded listening analytics.
+- [x] Publish the sanitized AXIS advanced workspace capabilities, SSRF documentation, migration, and regression coverage to the public GitHub repository (verified public commit `a3856e8`).
 - [x] Publish the sanitized AXIS premium interaction, midnight-glass motion, responsive chat, and regression update to the public GitHub repository (verified public commit `6947939`).
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
