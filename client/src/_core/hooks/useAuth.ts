@@ -1,4 +1,4 @@
-import { startLogin } from "@/const";
+import { requestNativeLogin, startLogin } from "@/const";
 import { trpc } from "@/lib/trpc";
 import { TRPCClientError } from "@trpc/client";
 import { useCallback, useEffect, useMemo } from "react";
@@ -79,9 +79,7 @@ export function useAuth(options?: UseAuthOptions) {
     // Navigate at this moment only. startLogin() mints the nonce + cookie itself.
     if (redirectPath) {
       window.location.href = redirectPath;
-    } else {
-      startLogin();
-    }
+    } else if (!requestNativeLogin()) startLogin();
   }, [
     redirectOnUnauthenticated,
     redirectPath,

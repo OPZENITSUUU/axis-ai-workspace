@@ -1,7 +1,9 @@
 import { StatusBar } from "expo-status-bar";
 import Constants from "expo-constants";
+import * as Linking from "expo-linking";
 import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
+import * as WebBrowser from "expo-web-browser";
 import { type ComponentProps, useCallback, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, Alert, BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -10,6 +12,10 @@ import { AXIS_WEB_URL } from "../src/config";
 import { axisMobileTheme, editorialTokens } from "../src/theme";
 
 const ANDROID_AUDIO_CAPTURE = "android.webkit.resource.AUDIO_CAPTURE";
+const SESSION_STORAGE_KEY = "manus-cookie";
+const SESSION_COOKIE_NAME = "app_session_id";
+
+WebBrowser.maybeCompleteAuthSession();
 
 Notifications.setNotificationHandler({
   handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
@@ -26,6 +32,9 @@ export default function AxisMobileHome() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [mobileSession, setMobileSession] = useState<string | null>(null);
+  const [signInBusy, setSignInBusy] = useState(false);
+  const [signInError, setSignInError] = useState<string | null>(null);
   const [updateState, setUpdateState] = useState<"idle" | "downloading" | "restarting">("idle");
   const pendingNotificationUrlRef = useRef<string | null>(null);
   const { isUpdateAvailable, isUpdatePending } = Updates.useUpdates();
@@ -121,20 +130,49 @@ export default function AxisMobileHome() {
     }
   }, [postToWorkspace]);
 
-  const handleWorkspaceMessage = useCallback((event: { nativeEvent: { data: string } }) => {
-    try {
-      const message = JSON.parse(event.nativeEvent.data) as { type?: string };
-      if (message.type === "axis-request-expo-push") void requestPushPermission();
-    } catch {
-      // Ignore malformed messages from the hosted workspace.
-    }
-  }, [requestPushPermission]);
-
   const retryWorkspace = () => {
     setLoadError(false);
     setIsLoading(true);
     setReloadKey((value) => value + 1);
   };
+
+  const beginSecureSignIn = useCallback(async () => {
+    if (signInBusy) return;
+    setSignInBusy(true);
+    setSignInError(null);
+    try {
+      const result = await WebBrowser.openAuthSessionAsync(`${AXIS_WEB_URL}/api/mobile/oauth/start`, Linking.createURL("oauth"));
+      if (result.type !== "success") throw new Error("Sign-in was cancelled before it could finish.");
+      const handoff = new URL(result.url).searchParams.get("handoff");
+      if (!handoff) throw new Error("AXIS did not receive a secure sign-in handoff.");
+      const response = await fetch(`${AXIS_WEB_URL}/api/mobile/oauth/exchange`, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ handoff }),
+      });
+      const payload = await response.json() as { sessionToken?: string; error?: string };
+      if (!response.ok || !payload.sessionToken) throw new Error(payload.error || "AXIS could not finish secure sign-in.");
+      setMobileSession(payload.sessionToken);
+      setLoadError(false);
+      setIsLoading(true);
+      setReloadKey(value => value + 1);
+    } catch (error) {
+      setSignInError(error instanceof Error ? error.message : "AXIS sign-in could not be completed.");
+      setLoadError(true);
+    } finally {
+      setSignInBusy(false);
+    }
+  }, [signInBusy]);
+
+  const handleWorkspaceMessage = useCallback((event: { nativeEvent: { data: string } }) => {
+    try {
+      const message = JSON.parse(event.nativeEvent.data) as { type?: string };
+      if (message.type === "axis-request-expo-push") void requestPushPermission();
+      if (message.type === "axis-mobile-login") void beginSecureSignIn();
+    } catch {
+      // Ignore malformed messages from the hosted workspace.
+    }
+  }, [beginSecureSignIn, requestPushPermission]);
 
   const handleNavigationChange = (navigation: WebViewNavigation) => {
     setCanGoBack(navigation.canGoBack);
@@ -157,7 +195,12 @@ export default function AxisMobileHome() {
       <StatusBar style="light" />
       {updateState !== "idle" ? <UpdateBanner state={updateState} /> : null}
       {loadError ? (
-        <ErrorState onRetry={retryWorkspace} />
+        <ErrorState
+          onRetry={signInError ? beginSecureSignIn : retryWorkspace}
+          title={signInError ? "Sign in to AXIS" : undefined}
+          detail={signInError ?? undefined}
+          retryLabel={signInError ? (signInBusy ? "Opening secure sign-in…" : "Continue securely") : undefined}
+        />
       ) : (
         <WebView<{}>
           ref={webViewRef}
@@ -166,6 +209,7 @@ export default function AxisMobileHome() {
           originWhitelist={["https://*"]}
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
+          injectedJavaScriptBeforeContentLoaded={mobileSession ? `try { sessionStorage.setItem(${JSON.stringify(SESSION_STORAGE_KEY)}, ${JSON.stringify(`${SESSION_COOKIE_NAME}=${mobileSession}`)}); } catch {} true;` : undefined}
           onNavigationStateChange={handleNavigationChange}
           onMessage={handleWorkspaceMessage}
           {...androidPermissionProps}
@@ -216,14 +260,14 @@ function LoadingState() {
   );
 }
 
-function ErrorState({ onRetry }: { onRetry: () => void }) {
+function ErrorState({ onRetry, title = "AXIS needs a connection", detail = "The private workspace could not be reached. Check your internet connection, then try again.", retryLabel = "Try again" }: { onRetry: () => void; title?: string; detail?: string; retryLabel?: string }) {
   return (
     <View style={styles.state}>
-      <Text style={styles.title}>AXIS needs a connection</Text>
-      <Text style={styles.detail}>The private workspace could not be reached. Check your internet connection, then try again.</Text>
-      <Text style={styles.caption}>Nothing is stored in this app while it reconnects.</Text>
+      <Text style={styles.title}>{title}</Text>
+      <Text style={styles.detail}>{detail}</Text>
+      <Text style={styles.caption}>AXIS opens your normal sign-in page in the browser, then returns here automatically.</Text>
       <Pressable onPress={onRetry} style={({ pressed }) => [styles.retry, pressed && styles.retryPressed]}>
-        <Text style={styles.retryText}>Try again</Text>
+        <Text style={styles.retryText}>{retryLabel}</Text>
       </Pressable>
     </View>
   );

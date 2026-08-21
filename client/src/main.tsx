@@ -5,7 +5,7 @@ import { httpBatchLink, TRPCClientError } from "@trpc/client";
 import { createRoot } from "react-dom/client";
 import superjson from "superjson";
 import App from "./App";
-import { startLogin } from "./const";
+import { requestNativeLogin, startLogin } from "./const";
 import "./index.css";
 
 const queryClient = new QueryClient();
@@ -18,7 +18,7 @@ const redirectToLoginIfUnauthorized = (error: unknown) => {
 
   if (!isUnauthorized) return;
 
-  startLogin();
+  if (!requestNativeLogin()) startLogin();
 };
 
 queryClient.getQueryCache().subscribe(event => {
@@ -73,17 +73,18 @@ const trpcClient = trpc.createClient({
 });
 
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
-  let reloadingForServiceWorkerUpdate = false;
-  navigator.serviceWorker.addEventListener("controllerchange", () => {
-    if (reloadingForServiceWorkerUpdate) return;
-    reloadingForServiceWorkerUpdate = true;
-    window.location.reload();
-  });
+  let reloadingForNewController = false;
 
   window.addEventListener("load", () => {
-    void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(error => {
-      console.warn("[PWA] Service worker registration was unavailable.", error);
+    void navigator.serviceWorker.register("/sw.js").catch(error => {
+      console.warn("[PWA] Service worker registration failed", error);
     });
+  });
+
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadingForNewController) return;
+    reloadingForNewController = true;
+    window.location.reload();
   });
 }
 

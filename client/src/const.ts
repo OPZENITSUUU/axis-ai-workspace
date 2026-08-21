@@ -2,6 +2,19 @@ import { OAUTH_STATE_COOKIE, encodeOAuthState } from "@shared/const";
 
 export { COOKIE_NAME, ONE_YEAR_MS } from "@shared/const";
 
+let nativeLoginRequested = false;
+
+export const requestNativeLogin = () => {
+  if (typeof window === "undefined") return false;
+  const bridge = (window as Window & { ReactNativeWebView?: { postMessage: (message: string) => void } }).ReactNativeWebView;
+  if (!bridge?.postMessage) return false;
+  if (!nativeLoginRequested) {
+    nativeLoginRequested = true;
+    bridge.postMessage(JSON.stringify({ type: "axis-mobile-login" }));
+  }
+  return true;
+};
+
 // Start the Manus OAuth login. Call this from an event handler or effect at the
 // moment you want to navigate, e.g. `onClick={() => startLogin()}`.
 //

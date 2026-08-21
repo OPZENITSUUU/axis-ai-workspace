@@ -25,6 +25,21 @@ export const users = mysqlTable("users", {
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 
+export const mobileAuthHandoffs = mysqlTable(
+  "mobile_auth_handoffs",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    handoffHash: varchar("handoffHash", { length: 64 }).notNull().unique(),
+    expiresAt: timestamp("expiresAt").notNull(),
+    consumedAt: timestamp("consumedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+  },
+  table => [index("mobile_auth_handoffs_expiry_idx").on(table.expiresAt)],
+);
+
+export type MobileAuthHandoff = typeof mobileAuthHandoffs.$inferSelect;
+
 export const projects = mysqlTable(
   "projects",
   {

@@ -57,6 +57,13 @@
       "when": 1787287200029,
       "tag": "0007_polite_boomerang",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "5",
+      "when": 1787330940000,
+      "tag": "0008_mobile_auth_handoffs",
+      "breakpoints": true
     }
   ]
 }

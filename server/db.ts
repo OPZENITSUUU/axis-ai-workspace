@@ -9,7 +9,9 @@ import {
   conversations,
   Conversation,
   InsertUser,
+  mobileAuthHandoffs,
   messages,
+  MobileAuthHandoff,
   notificationDevices,
   NotificationDevice,
   notificationEvents,
@@ -87,6 +89,38 @@ export async function getUserByOpenId(openId: string) {
 
   const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
   return result[0];
+}
+
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) return undefined;
+
+  const result = await db.select().from(users).where(eq(users.id, userId)).limit(1);
+  return result[0];
+}
+
+export async function createMobileAuthHandoff(userId: number, handoffHash: string, expiresAt: Date) {
+  const db = await requireDb();
+  await db.insert(mobileAuthHandoffs).values({ userId, handoffHash, expiresAt });
+}
+
+export async function consumeMobileAuthHandoff(handoffHash: string): Promise<MobileAuthHandoff | undefined> {
+  const db = await requireDb();
+  const now = new Date();
+  const result = await db
+    .select()
+    .from(mobileAuthHandoffs)
+    .where(and(eq(mobileAuthHandoffs.handoffHash, handoffHash), isNull(mobileAuthHandoffs.consumedAt)))
+    .limit(1);
+  const handoff = result[0];
+  if (!handoff || handoff.expiresAt <= now) return undefined;
+
+  const update = await db
+    .update(mobileAuthHandoffs)
+    .set({ consumedAt: now })
+    .where(and(eq(mobileAuthHandoffs.id, handoff.id), isNull(mobileAuthHandoffs.consumedAt)));
+  if ((update as unknown as { affectedRows?: number }).affectedRows === 0) return undefined;
+  return handoff;
 }
 
 export async function listConversationsForUser(userId: number): Promise<Conversation[]> {

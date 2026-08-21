@@ -7,16 +7,19 @@
     "start": "expo start",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "apk:preview": "pnpm dlx eas-cli@latest build --platform android --profile preview"
+    "apk:preview": "pnpm dlx eas-cli@latest build --platform android --profile preview",
+    "update:preview": "pnpm dlx eas-cli@latest update --channel preview --message \"AXIS preview update\" --non-interactive"
   },
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "expo": "~54.0.29",
     "expo-constants": "~18.0.14",
+    "expo-linking": "^57.0.7",
     "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.19",
     "expo-status-bar": "~3.0.9",
     "expo-updates": "~29.0.20",
+    "expo-web-browser": "^57.0.2",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

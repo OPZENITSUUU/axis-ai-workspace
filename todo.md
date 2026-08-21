@@ -158,3 +158,8 @@
 - [x] Restore the missing private web-to-native notification registration, background-task worker, and generic completion-alert integration against the existing user-scoped notification tables before physical-device testing.
 - [x] Replace all user-facing AXIS website references to "Voice Call" with "Voice Note" while preserving review-before-send voice behavior.
 - [x] Advance the AXIS service-worker cache after the Voice Note wording release so installed and browser clients refresh the deployed label.
+- [x] Generate a machine-readable QR code for the direct AXIS 0.5.0 Android APK download link.
+- [x] Replace the confusing AXIS Android WebView login loop with a simple system-browser sign-in, automatic app return, clear retry screen, and private-session persistence for non-technical users.
+- [ ] Build a new AXIS Android preview APK containing the simplified secure sign-in and one-time mobile-session handoff.
+- [x] Restore verified browser service-worker registration and a focused PWA regression contract after reconciling the public-source test suite.
+- [x] Restore the documented AXIS preview-update command so the automatic-update configuration remains reproducible.

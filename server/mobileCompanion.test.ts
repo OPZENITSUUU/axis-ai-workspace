@@ -26,11 +26,17 @@ describe("AXIS Android companion foundation", () => {
     expect(screen).toContain("onNavigationStateChange");
     expect(screen).toContain("hardwareBackPress");
     expect(screen).toContain("onHttpError");
+    expect(screen).toContain("openAuthSessionAsync");
+    expect(screen).toContain("axis-mobile-login");
+    expect(screen).toContain("injectedJavaScriptBeforeContentLoaded");
+    expect(screen).toContain("Continue securely");
     expect(screen).toContain("Try again");
     expect(screen).toContain("AXIS_WEB_URL");
     expect(appConfig).toContain("RECORD_AUDIO");
     expect(appConfig).toContain('"userInterfaceStyle": "dark"');
     expect(packageJson).toContain("react-native-webview");
+    expect(packageJson).toContain("expo-web-browser");
+    expect(packageJson).toContain("expo-linking");
     expect(packageJson).toContain("apk:preview");
     expect(readme).toContain("pnpm typecheck");
     expect(readme).toContain("expo export --platform web");
