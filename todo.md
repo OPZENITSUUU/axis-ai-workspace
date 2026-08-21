@@ -154,4 +154,4 @@
 - [x] Adapt the supplied editorial color, typography, spacing, and radius tokens into AXIS web and Android companion themes while preserving midnight-glass contrast, accessibility, and private-workspace interactions.
 - [x] Build a new internal AXIS 0.4.0 preview APK containing the native companion theme refinement after release validation succeeds (build `fdaef745-a52b-4429-8cfc-e75256e16885`, completed).
 - [x] Verify the supplied editorial token refinement is visible on the deployed AXIS website at desktop and mobile workspace widths.
-- [ ] Validate and add the owner-supplied `google-services.json` only to the AXIS Android native build configuration, then rebuild and verify secure FCM notification prerequisites without publishing Firebase files.
+- [x] Validate and add the owner-supplied `google-services.json` only to the AXIS Android native build configuration, then rebuild and verify secure FCM notification prerequisites without publishing Firebase files (AXIS 0.5.0 build `32890d61-13e5-4fe5-8938-c0c4313b0bb6` completed).
