@@ -1,4 +1,5 @@
 import { StatusBar } from "expo-status-bar";
+import * as Updates from "expo-updates";
 import { type ComponentProps, useEffect, useRef, useState } from "react";
 import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +19,42 @@ export default function AxisMobileHome() {
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
+  const [updateState, setUpdateState] = useState<"idle" | "downloading" | "restarting">("idle");
+  const { isUpdateAvailable, isUpdatePending } = Updates.useUpdates();
+
+  useEffect(() => {
+    if (!Updates.isEnabled) return;
+
+    if (isUpdatePending) {
+      setUpdateState("restarting");
+      void Updates.reloadAsync().catch(() => setUpdateState("idle"));
+      return;
+    }
+
+    if (!isUpdateAvailable) return;
+
+    let active = true;
+    setUpdateState("downloading");
+    void Updates.fetchUpdateAsync()
+      .then(() => {
+        if (active) setUpdateState("restarting");
+      })
+      .catch(() => {
+        if (active) setUpdateState("idle");
+      });
+
+    return () => {
+      active = false;
+    };
+  }, [isUpdateAvailable, isUpdatePending]);
+
+  useEffect(() => {
+    if (updateState !== "restarting" || !Updates.isEnabled) return;
+    const reloadTimer = setTimeout(() => {
+      void Updates.reloadAsync().catch(() => setUpdateState("idle"));
+    }, 650);
+    return () => clearTimeout(reloadTimer);
+  }, [updateState]);
 
   useEffect(() => {
     const subscription = BackHandler.addEventListener("hardwareBackPress", () => {
@@ -54,6 +91,7 @@ export default function AxisMobileHome() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top", "left", "right"]}>
       <StatusBar style="light" />
+      {updateState !== "idle" ? <UpdateBanner state={updateState} /> : null}
       {loadError ? (
         <ErrorState onRetry={retryWorkspace} />
       ) : (
@@ -88,6 +126,16 @@ export default function AxisMobileHome() {
   );
 }
 
+function UpdateBanner({ state }: { state: "downloading" | "restarting" }) {
+  const message = state === "downloading" ? "Updating AXIS to the latest version…" : "Latest AXIS version ready. Restarting…";
+  return (
+    <View pointerEvents="none" style={styles.updateBanner}>
+      <ActivityIndicator color="#060914" size="small" />
+      <Text style={styles.updateText}>{message}</Text>
+    </View>
+  );
+}
+
 function LoadingState() {
   return (
     <View style={styles.state}>
@@ -115,6 +163,8 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 
 const styles = StyleSheet.create({
   safeArea: { flex: 1, backgroundColor: "#060914" },
+  updateBanner: { position: "absolute", zIndex: 2, top: 12, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, backgroundColor: "#85dfb9", paddingHorizontal: 14, paddingVertical: 9, shadowColor: "#000", shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
+  updateText: { color: "#060914", fontSize: 12, fontWeight: "700" },
   state: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", padding: 32, backgroundColor: "#060914" },
   mark: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#85dfb9" },
   markText: { color: "#060914", fontSize: 21, fontWeight: "700" },

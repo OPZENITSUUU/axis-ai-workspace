@@ -73,6 +73,13 @@ const trpcClient = trpc.createClient({
 });
 
 if (typeof window !== "undefined" && "serviceWorker" in navigator) {
+  let reloadingForServiceWorkerUpdate = false;
+  navigator.serviceWorker.addEventListener("controllerchange", () => {
+    if (reloadingForServiceWorkerUpdate) return;
+    reloadingForServiceWorkerUpdate = true;
+    window.location.reload();
+  });
+
   window.addEventListener("load", () => {
     void navigator.serviceWorker.register("/sw.js", { scope: "/" }).catch(error => {
       console.warn("[PWA] Service worker registration was unavailable.", error);

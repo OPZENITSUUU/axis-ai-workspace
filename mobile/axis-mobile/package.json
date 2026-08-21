@@ -7,6 +7,7 @@
     "start": "expo start",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
+    "update:preview": "pnpm dlx eas-cli@latest update --channel preview",
     "apk:preview": "pnpm dlx eas-cli@latest build --platform android --profile preview"
   },
   "dependencies": {
@@ -14,6 +15,7 @@
     "expo": "~54.0.29",
     "expo-router": "~6.0.19",
     "expo-status-bar": "~3.0.9",
+    "expo-updates": "~29.0.20",
     "react": "19.1.0",
     "react-dom": "19.1.0",
     "react-native": "0.81.5",

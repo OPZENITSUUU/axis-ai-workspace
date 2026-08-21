@@ -2,13 +2,14 @@
   "expo": {
     "name": "AXIS",
     "slug": "axis-mobile",
-    "version": "0.1.0",
+    "version": "0.2.0",
     "orientation": "portrait",
     "scheme": "axis",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "space.manus.axis.mobile",
       "edgeToEdgeEnabled": true,
+      "versionCode": 2,
       "permissions": [
         "RECORD_AUDIO"
       ]
@@ -25,6 +26,15 @@
         "projectId": "b1ee2df9-96a8-4d00-b59d-6dde1b3adc66"
       }
     },
-    "owner": "opzenitsu"
+    "owner": "opzenitsu",
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/b1ee2df9-96a8-4d00-b59d-6dde1b3adc66",
+      "checkAutomatically": "ON_LOAD",
+      "fallbackToCacheTimeout": 0
+    },
+    "ios": {}
   }
 }

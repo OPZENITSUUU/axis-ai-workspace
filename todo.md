@@ -15,7 +15,9 @@
 - [x] Correct and republish the authenticated AXIS tablet workspace validation documentation so it distinguishes development-preview layout evidence from authenticated deployed-browser evidence (verified public commit `b339671`).
 - [ ] Capture a true authenticated tablet viewport of the deployed AXIS workspace, including a settled private workspace or owner-provided redacted evidence.
 - [x] Remove the bottom online/synced badge and AI-disclaimer footer from AXIS web and Android companion chat screens, and let the composer use the reclaimed space (shared hosted workspace update verified at mobile viewport).
-- [ ] Publish the sanitized AXIS bottom-chat layout update and its regression coverage to the public GitHub repository.
+- [x] Publish the sanitized AXIS bottom-chat layout update and its regression coverage to the public GitHub repository (verified public commit `b31f3b3`).
+- [x] Correct the AXIS PWA update-cache flow so new deployed workspace layouts replace a stale app shell without exposing private chat content offline (verified after a deployed authenticated workspace reload).
+- [ ] Add an automatic Android companion launch-time check for a newer official AXIS APK and show a trusted Update now action when one is available.
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
 - [x] Select and configure a replacement model provider because GitHub Models was retired on 30 July 2026 (OmniRoute is the selected experimental primary route).

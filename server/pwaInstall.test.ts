@@ -9,8 +9,12 @@ describe("AXIS installable PWA shell", () => {
     const offline = await readFile(path.join(process.cwd(), "client/public/offline.html"), "utf8");
 
     expect(main).toContain('navigator.serviceWorker.register("/sw.js"');
+    expect(main).toContain('navigator.serviceWorker.addEventListener("controllerchange"');
     expect(worker).toContain('url.pathname.startsWith("/api/")');
     expect(worker).toContain('caches.match("/offline.html")');
+    expect(worker).toContain('const CACHE_NAME = "axis-app-shell-v2"');
+    expect(worker).toContain('fetch(request).catch(async () => await caches.match("/offline.html"))');
+    expect(worker).toContain('fetch(request).then(response =>');
     expect(offline).toContain("AXIS is offline");
     expect(offline).toContain("never shows cached chat content");
   });
