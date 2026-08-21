@@ -9,11 +9,22 @@
     "android": {
       "package": "space.manus.axis.mobile",
       "edgeToEdgeEnabled": true,
-      "permissions": ["RECORD_AUDIO"]
+      "permissions": [
+        "RECORD_AUDIO"
+      ]
     },
-    "plugins": ["expo-router"],
+    "plugins": [
+      "expo-router"
+    ],
     "experiments": {
       "typedRoutes": true
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "b1ee2df9-96a8-4d00-b59d-6dde1b3adc66"
+      }
+    },
+    "owner": "opzenitsu"
   }
 }
