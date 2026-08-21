@@ -7,6 +7,7 @@ import { ActivityIndicator, Alert, BackHandler, Platform, Pressable, StyleSheet,
 import { SafeAreaView } from "react-native-safe-area-context";
 import WebView, { type WebViewNavigation } from "react-native-webview";
 import { AXIS_WEB_URL } from "../src/config";
+import { axisMobileTheme, editorialTokens } from "../src/theme";
 
 const ANDROID_AUDIO_CAPTURE = "android.webkit.resource.AUDIO_CAPTURE";
 
@@ -229,17 +230,17 @@ function ErrorState({ onRetry }: { onRetry: () => void }) {
 }
 
 const styles = StyleSheet.create({
-  safeArea: { flex: 1, backgroundColor: "#060914" },
+  safeArea: { flex: 1, backgroundColor: axisMobileTheme.canvas },
   updateBanner: { position: "absolute", zIndex: 2, top: 12, alignSelf: "center", flexDirection: "row", alignItems: "center", gap: 8, borderRadius: 999, backgroundColor: "#85dfb9", paddingHorizontal: 14, paddingVertical: 9, shadowColor: "#000", shadowOpacity: 0.22, shadowRadius: 14, shadowOffset: { width: 0, height: 6 }, elevation: 6 },
   updateText: { color: "#060914", fontSize: 12, fontWeight: "700" },
-  state: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", padding: 32, backgroundColor: "#060914" },
-  mark: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: 16, backgroundColor: "#85dfb9" },
-  markText: { color: "#060914", fontSize: 21, fontWeight: "700" },
-  title: { marginTop: 18, color: "#f5f7fb", fontSize: 20, fontWeight: "700", letterSpacing: 2 },
-  spinner: { marginTop: 18 },
-  detail: { marginTop: 14, color: "#c7d0dd", fontSize: 14, lineHeight: 21, textAlign: "center", maxWidth: 300 },
-  caption: { marginTop: 8, color: "#8290a4", fontSize: 12, lineHeight: 18, textAlign: "center", maxWidth: 292 },
-  retry: { marginTop: 24, borderRadius: 12, backgroundColor: "#85dfb9", paddingHorizontal: 18, paddingVertical: 12 },
+  state: { ...StyleSheet.absoluteFillObject, alignItems: "center", justifyContent: "center", padding: editorialTokens.spacingCard, backgroundColor: axisMobileTheme.canvas },
+  mark: { width: 48, height: 48, alignItems: "center", justifyContent: "center", borderRadius: editorialTokens.radiusInteractive, backgroundColor: axisMobileTheme.accent },
+  markText: { color: axisMobileTheme.accentInk, fontSize: 21, fontWeight: "700" },
+  title: { marginTop: editorialTokens.spacingElement, color: axisMobileTheme.text, fontSize: editorialTokens.bodySize, fontWeight: "400", letterSpacing: 0.6 },
+  spinner: { marginTop: editorialTokens.spacingElement },
+  detail: { marginTop: 14, color: "#c7d0dd", fontSize: editorialTokens.bodySmallSize, lineHeight: 21, textAlign: "center", maxWidth: 300 },
+  caption: { marginTop: 8, color: axisMobileTheme.muted, fontSize: editorialTokens.captionSize, lineHeight: 16, letterSpacing: 0.55, textAlign: "center", maxWidth: 292 },
+  retry: { marginTop: 24, borderRadius: editorialTokens.radiusInteractive, borderColor: axisMobileTheme.outline, borderWidth: 1, paddingHorizontal: 18, paddingVertical: 12 },
   retryPressed: { opacity: 0.75, transform: [{ scale: 0.97 }] },
-  retryText: { color: "#060914", fontSize: 14, fontWeight: "700" }
+  retryText: { color: axisMobileTheme.accent, fontSize: editorialTokens.bodySmallSize, fontWeight: "700" }
 });

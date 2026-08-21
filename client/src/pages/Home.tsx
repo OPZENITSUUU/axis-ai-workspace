@@ -918,8 +918,8 @@ export default function Home() {
               AXIS
             </div>
             <div className="max-w-xl py-16">
-              <p className="axis-entry-eyebrow mb-5 font-mono text-xs uppercase tracking-[0.22em]">Your private thinking space</p>
-              <h1 className="font-[Newsreader] text-5xl leading-[0.98] tracking-[-0.055em] md:text-7xl">A calmer way to work through complex things.</h1>
+              <p className="axis-entry-eyebrow axis-editorial-label mb-5">Your private thinking space</p>
+              <h1 className="axis-editorial-display">A calmer way to work through complex things.</h1>
               <p className="axis-entry-copy mt-7 max-w-md text-base leading-7">Chat, investigate, and build understanding—without losing the thread.</p>
             </div>
             <p className="axis-entry-footnote text-xs">Thoughtful tools for persistent work.</p>
@@ -929,13 +929,13 @@ export default function Home() {
               <p className="axis-entry-panel-copy font-mono text-xs uppercase tracking-[0.18em]">Welcome</p>
               <h2 className="mt-4 text-3xl font-semibold tracking-[-0.04em]">Your conversations, kept in context.</h2>
               <p className="axis-entry-panel-copy mt-4 text-sm leading-6">Sign in to begin a private, persistent workspace.</p>
-              <Button onClick={startLogin} className="axis-entry-primary mt-9 h-12 w-full rounded-xl hover:brightness-105">Continue with Manus</Button>
+              <Button onClick={startLogin} className="axis-entry-primary axis-editorial-ghost mt-9 h-12 w-full hover:brightness-105">Continue with Manus</Button>
               {canInstall ? (
                 <Button
                   type="button"
                   variant="outline"
                   onClick={() => void handleInstall()}
-                  className="axis-entry-secondary mt-3 h-11 w-full rounded-xl border bg-transparent"
+                  className="axis-entry-secondary axis-editorial-ghost mt-3 h-11 w-full border bg-transparent"
                 >
                   <Download className="mr-2 size-4" /> Install AXIS app
                 </Button>

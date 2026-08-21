@@ -35,11 +35,16 @@ describe("AXIS premium dark visual system", () => {
     expect(css).toContain(".axis-send-ready");
     expect(css).toContain("prefers-reduced-motion: reduce");
     expect(css).toContain("--axis-accent");
+    expect(css).toContain("--color-parchment");
+    expect(css).toContain("--axis-editorial-sphere");
+    expect(css).toContain("axis-editorial-display");
     expect(css).toContain(".axis-skeleton");
     expect(css).toContain("env(safe-area-inset-bottom)");
     expect(css).toContain(".axis-composer-dock");
     expect(css).toContain("overscroll-behavior: contain");
     expect(home).toContain("axis-shell");
+    expect(home).toContain("axis-editorial-display");
+    expect(home).toContain("axis-editorial-label");
     expect(home).toContain("axis-entry");
     expect(home).toContain("axis-settings-card");
     expect(home).toContain("axis-settings-choice");
