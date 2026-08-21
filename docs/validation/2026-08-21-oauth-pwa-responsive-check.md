@@ -10,6 +10,7 @@ This passive visual verification checked the published AXIS workspace shell afte
 | --- | --- |
 | Desktop, 1280×720 | The authenticated workspace rendered its midnight-glass sidebar, header controls, empty-state actions, prompt suggestions, and bottom-docked composer without an observable layout break. |
 | Narrow mobile, 375×812 | The responsive header, compact action stack, suggestions, and composer rendered within the viewport. The menu entry remained visible and no horizontal overflow was observed in the captured view. |
+| Desktop, 1280×720 after APK action update | The top bar rendered a visible **Android APK** action between Focus and Export without crowding or obscuring existing workspace controls. |
 
 ## Boundary
 

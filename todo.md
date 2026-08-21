@@ -163,3 +163,4 @@
 - [x] Build a new AXIS Android preview APK containing the simplified secure sign-in and one-time mobile-session handoff (AXIS 0.6.0 build `1d44952c-8c8a-4917-a932-f625a77916f7`, completed).
 - [x] Restore verified browser service-worker registration and a focused PWA regression contract after reconciling the public-source test suite.
 - [x] Restore the documented AXIS preview-update command so the automatic-update configuration remains reproducible.
+- [x] Add a responsive website APK download action that redirects to the current AXIS Android 0.6.0 release artifact.

@@ -101,6 +101,8 @@ const suggestedPrompts = [
   "Review this idea and point out the weak assumptions",
 ];
 
+const AXIS_ANDROID_APK_URL = "https://expo.dev/artifacts/eas/Sw4G3-SXtwTyE2zkwYbIdsh9oNLwLYH8B60UmzRp-Mk.apk";
+
 const supportedFileTypes = new Set([
   "application/pdf",
   "text/plain",
@@ -233,6 +235,10 @@ export default function Home() {
     } else {
       toast("Use your browser menu to install AXIS as an app.");
     }
+  };
+
+  const downloadAndroidApk = () => {
+    window.location.assign(AXIS_ANDROID_APK_URL);
   };
   const [csvManagerOpen, setCsvManagerOpen] = useState(false);
   const [csvRenameId, setCsvRenameId] = useState<number | null>(null);
@@ -942,6 +948,9 @@ export default function Home() {
               ) : (
                 <p className="axis-entry-panel-copy mt-4 text-center text-xs leading-5">{isInstalled ? "AXIS is installed on this device." : "On Android, use your browser menu to install AXIS as an app."}</p>
               )}
+              <Button type="button" variant="outline" onClick={downloadAndroidApk} className="axis-entry-secondary axis-editorial-ghost mt-3 h-11 w-full border bg-transparent">
+                <Download className="mr-2 size-4" /> Download Android APK <span className="ml-auto font-mono text-[10px] opacity-65">0.6.0</span>
+              </Button>
             </div>
           </section>
         </div>
@@ -1049,6 +1058,7 @@ export default function Home() {
             <button onClick={() => setPromptLibraryOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex" aria-label="Open prompt library"><Library className="size-3.5" /> Prompts</button>
             <button onClick={() => void toggleFocusAudio()} aria-pressed={focusAudioActive} className={cn("axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex", focusAudioActive && "axis-settings-choice-active")} aria-label={focusAudioActive ? "Stop local focus audio" : "Start local focus audio"}><Music2 className="size-3.5" /> {focusAudioActive ? "Focus on" : "Focus"}</button>
             {!isInstalled && canInstall && <button onClick={() => void handleInstall()} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex" aria-label="Install AXIS app"><Download className="size-3.5" /> Install</button>}
+            <button onClick={downloadAndroidApk} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex" aria-label="Download AXIS Android APK"><Download className="size-3.5" /> Android APK</button>
             <button onClick={exportConversation} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex" aria-label="Export current private conversation"><Download className="size-3.5" /> Export</button>
             <button onClick={() => setCommandOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex"><Search className="size-3.5" /> Search <kbd className="rounded border border-current/20 px-1 font-mono text-[9px]">⌘K</kbd></button>
             <button onClick={() => setFocusMode(current => !current)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex"><PanelLeftClose className="size-3.5" /> {focusMode ? "Exit focus" : "Focus"}</button>
@@ -1136,6 +1146,7 @@ export default function Home() {
               <MobileAction icon={<Camera className="size-4" />} label="Camera" onClick={() => { cameraInputRef.current?.click(); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Library className="size-4" />} label="Prompt library" onClick={() => { setPromptLibraryOpen(true); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Download className="size-4" />} label="Export chat" onClick={() => { exportConversation(); setMobileSheetOpen(false); }} />
+              <MobileAction icon={<Download className="size-4" />} label="Android APK" onClick={downloadAndroidApk} />
               {!isInstalled && canInstall && <MobileAction icon={<Download className="size-4" />} label="Install app" onClick={() => { void handleInstall(); setMobileSheetOpen(false); }} />}
             </div>
           </div>
@@ -1157,6 +1168,7 @@ export default function Home() {
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
               <div className="py-4"><p className="text-sm font-medium">Browser voice tuning</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Applies only to the private Listen action in this browser. AXIS does not send these controls or message audio to an AI provider.</p><label className="axis-muted-copy mt-3 block text-xs" htmlFor="voice-rate">Speech speed <span className="float-right font-mono">{voiceTuning.rate.toFixed(1)}×</span></label><input id="voice-rate" type="range" min="0.5" max="1.8" step="0.1" value={voiceTuning.rate} onChange={event => updateVoiceTuning({ rate: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /><label className="axis-muted-copy mt-4 block text-xs" htmlFor="voice-pitch">Speech pitch <span className="float-right font-mono">{voiceTuning.pitch.toFixed(1)}×</span></label><input id="voice-pitch" type="range" min="0.5" max="1.5" step="0.1" value={voiceTuning.pitch} onChange={event => updateVoiceTuning({ pitch: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Install AXIS</p><p className="axis-muted-copy mt-0.5 text-xs">Add this private workspace to your device for an app-like browser experience.</p></div>{isInstalled ? <span className="axis-settings-choice axis-settings-choice-active rounded-lg px-3 py-1.5 text-xs font-medium">Installed</span> : canInstall ? <button onClick={() => void handleInstall()} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium">Install</button> : <span className="axis-muted-copy text-xs">Use browser menu</span>}</div>
+              <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Android APK</p><p className="axis-muted-copy mt-0.5 text-xs">Download AXIS 0.6.0 directly for Android.</p></div><button onClick={downloadAndroidApk} className="axis-toolbar-control inline-flex items-center gap-2 rounded-xl px-3 py-2 text-xs font-medium"><Download className="size-3.5" /> Download</button></div>
               <div className="py-4"><p className="text-sm font-medium">AI provider</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">{providerStatusQuery.data?.ready ? `${providerStatusQuery.data.label} is ready with ${providerStatusQuery.data.model}. AXIS exposes only configured, owner-approved providers.` : "No-billing safe mode is active. Add the server-only OmniRoute URL and token to enable live responses."}</p><div className="mt-3 flex flex-wrap gap-2">{providerStatusQuery.data?.eligibleProviders.map(provider => <button key={provider.id} onClick={() => void saveConversationProvider(provider.id)} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium", conversationQuery.data?.conversation.provider === provider.id ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{provider.label}</button>)}</div></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">CSV files</p><p className="axis-muted-copy mt-0.5 text-xs">View, rename, or remove CSV uploads that belong to this private account.</p></div><button onClick={openCsvManager} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium" aria-label="Manage private CSV files">Manage</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Export private data</p><p className="axis-muted-copy mt-0.5 text-xs">Download chats, projects, settings, and file metadata.</p></div><button onClick={() => void exportWorkspace()} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Export workspace"><Download className="size-4" /></button></div>
@@ -1178,6 +1190,7 @@ export default function Home() {
               <CommandRow icon={<Library className="size-4" />} label="Prompt library" detail="Insert a useful template into the draft" onClick={() => { setPromptLibraryOpen(true); setCommandOpen(false); }} />
               <CommandRow icon={<Music2 className="size-4" />} label={focusAudioActive ? "Stop focus audio" : "Start focus audio"} detail="Generated locally; nothing is uploaded" onClick={() => { void toggleFocusAudio(); setCommandOpen(false); }} />
               {!isInstalled && canInstall && <CommandRow icon={<Download className="size-4" />} label="Install AXIS app" detail="Add this private workspace to your device" onClick={() => { void handleInstall(); setCommandOpen(false); }} />}
+              <CommandRow icon={<Download className="size-4" />} label="Download Android APK" detail="Get AXIS 0.6.0 for Android" onClick={downloadAndroidApk} />
               <CommandRow icon={<Settings className="size-4" />} label="Workspace settings" detail="Theme, privacy, memory, and export" onClick={() => { setSettingsOpen(true); setCommandOpen(false); }} />
               <CommandRow icon={<PanelLeftClose className="size-4" />} label={focusMode ? "Exit focus mode" : "Enter focus mode"} detail="Reduce workspace distractions" onClick={() => { setFocusMode(current => !current); setCommandOpen(false); }} />
               <p className="axis-muted-copy px-3 pb-2 pt-5 font-mono text-[10px] uppercase tracking-[0.16em]">Recent chats</p>
