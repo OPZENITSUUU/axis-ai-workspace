@@ -1104,7 +1104,7 @@ export default function Home() {
                     <button type="button" onClick={() => fileInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Attach file"><Paperclip className="size-4" /></button>
                     <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Capture a private photo"><Camera className="size-4" /></button>
                     <button type="button" onClick={toggleVoiceInput} aria-pressed={isListening} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", isListening && "axis-voice-recording")} aria-label={isListening ? "Stop voice input" : "Start voice input"}>{isListening ? <Square className="size-3.5" /> : <Mic className="size-4" />}</button>
-                    <button type="button" onClick={() => setVoiceFocusOpen(true)} className="axis-icon-control hidden size-10 place-items-center rounded-xl transition-colors sm:grid sm:size-9" aria-label="Open voice focus"><Volume2 className="size-4" /></button>
+                    <button type="button" onClick={() => setVoiceFocusOpen(true)} className="axis-icon-control hidden size-10 place-items-center rounded-xl transition-colors sm:grid sm:size-9" aria-label="Open Voice Note"><Volume2 className="size-4" /></button>
                     <button type="button" onClick={() => setBackgroundMode(current => !current)} aria-pressed={backgroundMode} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", backgroundMode && "axis-settings-choice-active")} aria-label={backgroundMode ? "Turn off background task mode" : "Turn on background task mode"}><Clock3 className="size-4" /></button>
                     <button type="button" onClick={() => setPromptLibraryOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open prompt library"><Library className="size-4" /></button>
                     <button type="button" onClick={() => void toggleFocusAudio()} aria-pressed={focusAudioActive} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", focusAudioActive && "axis-settings-choice-active")} aria-label={focusAudioActive ? "Stop local focus audio" : "Start local focus audio"}><Music2 className="size-4" /></button>
@@ -1191,10 +1191,10 @@ export default function Home() {
         </div>
       )}
       {voiceFocusOpen && (
-        <div className="axis-overlay fixed inset-0 z-[70] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Voice focus" onMouseDown={() => setVoiceFocusOpen(false)}>
+        <div className="axis-overlay fixed inset-0 z-[70] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Voice Note" onMouseDown={() => setVoiceFocusOpen(false)}>
           <div className="axis-command w-full max-w-md rounded-3xl border p-6 text-center" onMouseDown={event => event.stopPropagation()}>
             <div className={cn("axis-accent-mark mx-auto grid size-16 place-items-center rounded-full", isListening && "axis-voice-recording")}><Mic className="size-6" /></div>
-            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em]">Private voice focus</p>
+            <p className="mt-5 font-mono text-[10px] uppercase tracking-[0.18em]">Private Voice Note</p>
             <h3 className="mt-2 text-xl font-semibold">Speak, review, then send</h3>
             <p className="axis-muted-copy mt-3 text-sm leading-6">Your browser asks for microphone permission. AXIS adds the transcript to the private draft and never auto-sends it.</p>
             <div className="mt-6 flex justify-center gap-3"><button onClick={toggleVoiceInput} className="axis-primary-control rounded-xl px-4 py-2 text-sm font-medium">{isListening ? "Stop listening" : "Start listening"}</button><button onClick={() => setVoiceFocusOpen(false)} className="axis-toolbar-control rounded-xl px-4 py-2 text-sm">Close</button></div>

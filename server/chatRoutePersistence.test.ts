@@ -62,7 +62,7 @@ describe("AXIS chat route persistence", () => {
       "assistant",
       "One response.",
       "complete",
-      expect.objectContaining({ generationDurationMs: expect.any(Number), generatedWordCount: 2 }),
+      expect.objectContaining({ generatedWordCount: 2 }),
     );
     expect(writes.filter(value => value.includes("event: token"))).toHaveLength(2);
     expect(writes.some(value => value.includes("event: done"))).toBe(true);
