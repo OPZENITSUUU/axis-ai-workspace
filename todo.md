@@ -160,6 +160,6 @@
 - [x] Advance the AXIS service-worker cache after the Voice Note wording release so installed and browser clients refresh the deployed label.
 - [x] Generate a machine-readable QR code for the direct AXIS 0.5.0 Android APK download link.
 - [x] Replace the confusing AXIS Android WebView login loop with a simple system-browser sign-in, automatic app return, clear retry screen, and private-session persistence for non-technical users.
-- [ ] Build a new AXIS Android preview APK containing the simplified secure sign-in and one-time mobile-session handoff.
+- [x] Build a new AXIS Android preview APK containing the simplified secure sign-in and one-time mobile-session handoff (AXIS 0.6.0 build `1d44952c-8c8a-4917-a932-f625a77916f7`, completed).
 - [x] Restore verified browser service-worker registration and a focused PWA regression contract after reconciling the public-source test suite.
 - [x] Restore the documented AXIS preview-update command so the automatic-update configuration remains reproducible.
