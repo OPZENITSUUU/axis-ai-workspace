@@ -1,0 +1,6 @@
+# Firebase Android client configuration is supplied to remote builds as an EAS file environment variable.
+google-services.json
+
+# Local Expo artifacts
+.expo/
+dist/

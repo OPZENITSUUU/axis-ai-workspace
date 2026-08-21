@@ -7,7 +7,6 @@
     "start": "expo start",
     "android": "expo start --android",
     "typecheck": "tsc --noEmit",
-    "update:preview": "pnpm dlx eas-cli@latest update --channel preview",
     "apk:preview": "pnpm dlx eas-cli@latest build --platform android --profile preview"
   },
   "dependencies": {

@@ -2,14 +2,14 @@
   "expo": {
     "name": "AXIS",
     "slug": "axis-mobile",
-    "version": "0.4.0",
+    "version": "0.5.0",
     "orientation": "portrait",
     "scheme": "axis",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "space.manus.axis.mobile",
       "edgeToEdgeEnabled": true,
-      "versionCode": 4,
+      "versionCode": 5,
       "permissions": [
         "RECORD_AUDIO"
       ]
