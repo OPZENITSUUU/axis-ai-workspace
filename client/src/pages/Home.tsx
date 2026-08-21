@@ -158,6 +158,17 @@ export default function Home() {
   const [isListening, setIsListening] = useState(false);
   const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
   const [voiceTuning, setVoiceTuning] = useState(defaultVoiceTuning);
+
+  const handleInstall = async () => {
+    const outcome = await install();
+    if (outcome === "accepted") {
+      toast.success("AXIS is being added to your device.");
+    } else if (outcome === "dismissed") {
+      toast("You can install AXIS later from your browser menu.");
+    } else {
+      toast("Use your browser menu to install AXIS as an app.");
+    }
+  };
   const [csvManagerOpen, setCsvManagerOpen] = useState(false);
   const [csvRenameId, setCsvRenameId] = useState<number | null>(null);
   const [csvRenameValue, setCsvRenameValue] = useState("");
@@ -704,7 +715,7 @@ export default function Home() {
                 <Button
                   type="button"
                   variant="outline"
-                  onClick={() => void install()}
+                  onClick={() => void handleInstall()}
                   className="axis-entry-secondary mt-3 h-11 w-full rounded-xl border bg-transparent"
                 >
                   <Download className="mr-2 size-4" /> Install AXIS app
@@ -816,6 +827,7 @@ export default function Home() {
           </div>
             <div className="flex items-center gap-1">
             <span className="axis-muted-copy hidden rounded-full border border-white/10 px-2 py-1 text-[10px] capitalize lg:inline-flex">{settingsQuery.data?.assistantMode || "balanced"}</span>
+            {!isInstalled && canInstall && <button onClick={() => void handleInstall()} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex" aria-label="Install AXIS app"><Download className="size-3.5" /> Install</button>}
             <button onClick={exportConversation} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex" aria-label="Export current private conversation"><Download className="size-3.5" /> Export</button>
             <button onClick={() => setCommandOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex"><Search className="size-3.5" /> Search <kbd className="rounded border border-current/20 px-1 font-mono text-[9px]">⌘K</kbd></button>
             <button onClick={() => setFocusMode(current => !current)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex"><PanelLeftClose className="size-3.5" /> {focusMode ? "Exit focus" : "Focus"}</button>
@@ -900,6 +912,7 @@ export default function Home() {
               <MobileAction icon={<Paperclip className="size-4" />} label="Upload file" onClick={() => { fileInputRef.current?.click(); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Camera className="size-4" />} label="Camera" onClick={() => { cameraInputRef.current?.click(); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Download className="size-4" />} label="Export chat" onClick={() => { exportConversation(); setMobileSheetOpen(false); }} />
+              {!isInstalled && canInstall && <MobileAction icon={<Download className="size-4" />} label="Install app" onClick={() => { void handleInstall(); setMobileSheetOpen(false); }} />}
             </div>
           </div>
         </div>
@@ -918,6 +931,7 @@ export default function Home() {
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Privacy</p><p className="axis-muted-copy mt-0.5 text-xs">Strict keeps all workspace access user-scoped.</p></div><button onClick={() => void saveSetting({ privacy: settingsQuery.data?.privacy === "strict" ? "standard" : "strict" })} className="axis-settings-choice axis-settings-choice-inactive rounded-lg px-3 py-1.5 text-xs font-medium">{settingsQuery.data?.privacy || "strict"}</button></div>
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
               <div className="py-4"><p className="text-sm font-medium">Browser voice tuning</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Applies only to the private Listen action in this browser. AXIS does not send these controls or message audio to an AI provider.</p><label className="axis-muted-copy mt-3 block text-xs" htmlFor="voice-rate">Speech speed <span className="float-right font-mono">{voiceTuning.rate.toFixed(1)}×</span></label><input id="voice-rate" type="range" min="0.5" max="1.8" step="0.1" value={voiceTuning.rate} onChange={event => updateVoiceTuning({ rate: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /><label className="axis-muted-copy mt-4 block text-xs" htmlFor="voice-pitch">Speech pitch <span className="float-right font-mono">{voiceTuning.pitch.toFixed(1)}×</span></label><input id="voice-pitch" type="range" min="0.5" max="1.5" step="0.1" value={voiceTuning.pitch} onChange={event => updateVoiceTuning({ pitch: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /></div>
+              <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Install AXIS</p><p className="axis-muted-copy mt-0.5 text-xs">Add this private workspace to your device for an app-like browser experience.</p></div>{isInstalled ? <span className="axis-settings-choice axis-settings-choice-active rounded-lg px-3 py-1.5 text-xs font-medium">Installed</span> : canInstall ? <button onClick={() => void handleInstall()} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium">Install</button> : <span className="axis-muted-copy text-xs">Use browser menu</span>}</div>
               <div className="py-4"><p className="text-sm font-medium">AI provider</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">{providerStatusQuery.data?.ready ? `${providerStatusQuery.data.label} is ready with ${providerStatusQuery.data.model}. AXIS exposes only configured, owner-approved providers.` : "No-billing safe mode is active. Add the server-only OmniRoute URL and token to enable live responses."}</p><div className="mt-3 flex flex-wrap gap-2">{providerStatusQuery.data?.eligibleProviders.map(provider => <button key={provider.id} onClick={() => void saveConversationProvider(provider.id)} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium", conversationQuery.data?.conversation.provider === provider.id ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{provider.label}</button>)}</div></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">CSV files</p><p className="axis-muted-copy mt-0.5 text-xs">View, rename, or remove CSV uploads that belong to this private account.</p></div><button onClick={openCsvManager} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium" aria-label="Manage private CSV files">Manage</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Export private data</p><p className="axis-muted-copy mt-0.5 text-xs">Download chats, projects, settings, and file metadata.</p></div><button onClick={() => void exportWorkspace()} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Export workspace"><Download className="size-4" /></button></div>
@@ -936,6 +950,7 @@ export default function Home() {
               <CommandRow icon={<FolderKanban className="size-4" />} label="New project" detail="Create and pin a private project" onClick={() => { void createNewProject(); setCommandOpen(false); }} />
               <CommandRow icon={<Paperclip className="size-4" />} label="Upload file" detail="Attach a private document or image" onClick={() => { fileInputRef.current?.click(); setCommandOpen(false); }} />
               <CommandRow icon={<FileText className="size-4" />} label="Manage CSV files" detail="View, rename, or remove private CSV uploads" onClick={() => { openCsvManager(); setCommandOpen(false); }} />
+              {!isInstalled && canInstall && <CommandRow icon={<Download className="size-4" />} label="Install AXIS app" detail="Add this private workspace to your device" onClick={() => { void handleInstall(); setCommandOpen(false); }} />}
               <CommandRow icon={<Settings className="size-4" />} label="Workspace settings" detail="Theme, privacy, memory, and export" onClick={() => { setSettingsOpen(true); setCommandOpen(false); }} />
               <CommandRow icon={<PanelLeftClose className="size-4" />} label={focusMode ? "Exit focus mode" : "Enter focus mode"} detail="Reduce workspace distractions" onClick={() => { setFocusMode(current => !current); setCommandOpen(false); }} />
               <p className="axis-muted-copy px-3 pb-2 pt-5 font-mono text-[10px] uppercase tracking-[0.16em]">Recent chats</p>

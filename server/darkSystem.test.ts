@@ -64,6 +64,8 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("axis:voice-tuning:");
     expect(home).toContain("utterance.rate = voiceTuning.rate");
     expect(home).toContain("utterance.pitch = voiceTuning.pitch");
+    expect(home).toContain("Install AXIS");
+    expect(home).toContain("handleInstall");
     expect(home).not.toContain("generativelanguage.googleapis.com");
     expect(css).toContain(".axis-message-actions");
     expect(css).toContain(".axis-voice-recording");
