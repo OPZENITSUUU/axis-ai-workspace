@@ -1,13 +1,18 @@
-import { and, desc, eq, inArray } from "drizzle-orm";
+import { and, desc, eq, inArray, isNull } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
 import {
   attachments,
   Attachment,
+  backgroundTasks,
+  BackgroundTask,
   ChatMessage,
   conversations,
   Conversation,
   InsertUser,
   messages,
+  notificationDevices,
+  NotificationDevice,
+  notificationEvents,
   projects,
   Project,
   userSettings,
@@ -217,7 +222,7 @@ export async function getUserSettings(userId: number): Promise<UserSettings> {
 
 export async function updateUserSettings(
   userId: number,
-  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "assistantMode" | "preferredModel" | "memoryEnabled" | "privacy">>,
+  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "assistantMode" | "preferredModel" | "memoryEnabled" | "privacy" | "backgroundTaskNotifications" | "backgroundTaskErrors">>,
 ) {
   const db = await requireDb();
   await getUserSettings(userId);
@@ -227,18 +232,32 @@ export async function updateUserSettings(
 
 export async function exportWorkspaceForUser(userId: number) {
   const db = await requireDb();
-  const [settings, userProjects, userConversations, userMessages, userAttachments] = await Promise.all([
+  const [settings, userProjects, userConversations, userMessages, userAttachments, userTasks, userNotificationEvents] = await Promise.all([
     getUserSettings(userId),
     listProjectsForUser(userId),
     listConversationsForUser(userId),
     db.select().from(messages).where(eq(messages.userId, userId)).orderBy(messages.createdAt),
     db.select().from(attachments).where(eq(attachments.userId, userId)).orderBy(attachments.createdAt),
+    db.select().from(backgroundTasks).where(eq(backgroundTasks.userId, userId)).orderBy(backgroundTasks.createdAt),
+    db.select().from(notificationEvents).where(eq(notificationEvents.userId, userId)).orderBy(notificationEvents.createdAt),
   ]);
-  return { exportedAt: new Date().toISOString(), settings, projects: userProjects, conversations: userConversations, messages: userMessages, attachments: userAttachments };
+  return {
+    exportedAt: new Date().toISOString(),
+    settings,
+    projects: userProjects,
+    conversations: userConversations,
+    messages: userMessages,
+    attachments: userAttachments,
+    backgroundTasks: userTasks.map(({ prompt, ...task }) => ({ ...task, prompt: "[redacted from export: use the linked conversation]" })),
+    notificationEvents: userNotificationEvents,
+  };
 }
 
 export async function deleteWorkspaceDataForUser(userId: number) {
   const db = await requireDb();
+  await db.delete(notificationEvents).where(eq(notificationEvents.userId, userId));
+  await db.delete(notificationDevices).where(eq(notificationDevices.userId, userId));
+  await db.delete(backgroundTasks).where(eq(backgroundTasks.userId, userId));
   await db.delete(attachments).where(eq(attachments.userId, userId));
   await db.delete(messages).where(eq(messages.userId, userId));
   await db.delete(conversations).where(eq(conversations.userId, userId));
@@ -392,4 +411,185 @@ export async function createAttachment(input: {
   const created = await db.select().from(attachments).where(eq(attachments.id, id)).limit(1);
   if (!created[0]) throw new Error("Attachment could not be created");
   return created[0];
+}
+
+export async function createBackgroundTask(input: {
+  userId: number;
+  conversationId: number;
+  clientRequestId: string;
+  prompt: string;
+  attachmentIds: number[];
+  provider: string;
+  model?: string | null;
+  userMessageId?: number | null;
+}) {
+  const db = await requireDb();
+  await db.insert(backgroundTasks).values({
+    ...input,
+    attachmentIds: JSON.stringify(input.attachmentIds),
+    model: input.model ?? null,
+    userMessageId: input.userMessageId ?? null,
+  }).onDuplicateKeyUpdate({ set: { updatedAt: new Date() } });
+  const dbTask = await db
+    .select()
+    .from(backgroundTasks)
+    .where(and(eq(backgroundTasks.userId, input.userId), eq(backgroundTasks.clientRequestId, input.clientRequestId)))
+    .limit(1);
+  const task = dbTask[0];
+  if (!task) throw new Error("Background task could not be created");
+  return task;
+}
+
+export async function listBackgroundTasksForUser(userId: number): Promise<BackgroundTask[]> {
+  const db = await requireDb();
+  return db
+    .select()
+    .from(backgroundTasks)
+    .where(eq(backgroundTasks.userId, userId))
+    .orderBy(desc(backgroundTasks.createdAt))
+    .limit(30);
+}
+
+export async function getBackgroundTaskForUser(userId: number, taskId: number) {
+  const db = await requireDb();
+  const result = await db
+    .select()
+    .from(backgroundTasks)
+    .where(and(eq(backgroundTasks.id, taskId), eq(backgroundTasks.userId, userId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function getBackgroundTaskForRequest(userId: number, clientRequestId: string) {
+  const db = await requireDb();
+  const result = await db
+    .select()
+    .from(backgroundTasks)
+    .where(and(eq(backgroundTasks.userId, userId), eq(backgroundTasks.clientRequestId, clientRequestId)))
+    .limit(1);
+  return result[0];
+}
+
+export async function setBackgroundTaskUserMessage(taskId: number, userId: number, userMessageId: number) {
+  const db = await requireDb();
+  await db
+    .update(backgroundTasks)
+    .set({ userMessageId })
+    .where(and(eq(backgroundTasks.id, taskId), eq(backgroundTasks.userId, userId), isNull(backgroundTasks.userMessageId)));
+  return getBackgroundTaskForUser(userId, taskId);
+}
+
+export async function claimNextBackgroundTask() {
+  const db = await requireDb();
+  const queued = await db
+    .select()
+    .from(backgroundTasks)
+    .where(eq(backgroundTasks.status, "queued"))
+    .orderBy(backgroundTasks.createdAt)
+    .limit(1);
+  const task = queued[0];
+  if (!task) return undefined;
+
+  const result = await db
+    .update(backgroundTasks)
+    .set({ status: "running", claimedAt: new Date(), attemptCount: task.attemptCount + 1 })
+    .where(and(eq(backgroundTasks.id, task.id), eq(backgroundTasks.status, "queued")));
+  const affectedRows = Number((result[0] as { affectedRows?: number }).affectedRows ?? 0);
+  if (affectedRows !== 1) return undefined;
+
+  return getBackgroundTaskForUser(task.userId, task.id);
+}
+
+export async function completeBackgroundTask(taskId: number, assistantMessageId: number) {
+  const db = await requireDb();
+  await db
+    .update(backgroundTasks)
+    .set({ status: "completed", assistantMessageId, completedAt: new Date() })
+    .where(and(eq(backgroundTasks.id, taskId), eq(backgroundTasks.status, "running")));
+}
+
+export async function failBackgroundTask(taskId: number) {
+  const db = await requireDb();
+  await db
+    .update(backgroundTasks)
+    .set({ status: "failed", completedAt: new Date() })
+    .where(and(eq(backgroundTasks.id, taskId), eq(backgroundTasks.status, "running")));
+}
+
+export async function upsertNotificationDevice(input: {
+  userId: number;
+  provider: "web_push" | "expo_push";
+  tokenHash: string;
+  expoPushToken?: string | null;
+  webPushEndpoint?: string | null;
+  webPushP256dh?: string | null;
+  webPushAuth?: string | null;
+}) {
+  const db = await requireDb();
+  await db.insert(notificationDevices).values({
+    ...input,
+    expoPushToken: input.expoPushToken ?? null,
+    webPushEndpoint: input.webPushEndpoint ?? null,
+    webPushP256dh: input.webPushP256dh ?? null,
+    webPushAuth: input.webPushAuth ?? null,
+    enabled: true,
+    lastSeenAt: new Date(),
+  }).onDuplicateKeyUpdate({
+    set: {
+      userId: input.userId,
+      expoPushToken: input.expoPushToken ?? null,
+      webPushEndpoint: input.webPushEndpoint ?? null,
+      webPushP256dh: input.webPushP256dh ?? null,
+      webPushAuth: input.webPushAuth ?? null,
+      enabled: true,
+      lastSeenAt: new Date(),
+    },
+  });
+  const result = await db
+    .select()
+    .from(notificationDevices)
+    .where(and(eq(notificationDevices.provider, input.provider), eq(notificationDevices.tokenHash, input.tokenHash)))
+    .limit(1);
+  if (!result[0]) throw new Error("Notification device could not be registered");
+  return result[0];
+}
+
+export async function listEnabledNotificationDevicesForUser(userId: number): Promise<NotificationDevice[]> {
+  const db = await requireDb();
+  return db
+    .select()
+    .from(notificationDevices)
+    .where(and(eq(notificationDevices.userId, userId), eq(notificationDevices.enabled, true)));
+}
+
+export async function disableNotificationDeviceForUser(userId: number, provider: "web_push" | "expo_push", tokenHash: string) {
+  const db = await requireDb();
+  await db
+    .update(notificationDevices)
+    .set({ enabled: false })
+    .where(and(eq(notificationDevices.userId, userId), eq(notificationDevices.provider, provider), eq(notificationDevices.tokenHash, tokenHash)));
+}
+
+export async function createNotificationEvent(input: {
+  userId: number;
+  backgroundTaskId: number;
+  deviceId: number;
+  type: "task_complete" | "task_error";
+}) {
+  const db = await requireDb();
+  const result = await db.insert(notificationEvents).values(input);
+  const id = Number((result[0] as { insertId: number }).insertId);
+  const event = await db.select().from(notificationEvents).where(eq(notificationEvents.id, id)).limit(1);
+  if (!event[0]) throw new Error("Notification event could not be created");
+  return event[0];
+}
+
+export async function markNotificationEventSent(eventId: number, receiptId?: string | null) {
+  const db = await requireDb();
+  await db.update(notificationEvents).set({ status: "sent", receiptId: receiptId ?? null, sentAt: new Date() }).where(eq(notificationEvents.id, eventId));
+}
+
+export async function markNotificationEventFailed(eventId: number, failureCode: string) {
+  const db = await requireDb();
+  await db.update(notificationEvents).set({ status: "failed", failureCode: failureCode.slice(0, 128) }).where(eq(notificationEvents.id, eventId));
 }

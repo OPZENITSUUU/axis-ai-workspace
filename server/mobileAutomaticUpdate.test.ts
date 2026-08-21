@@ -8,8 +8,9 @@ describe("AXIS automatic Android companion updates", () => {
     const easConfig = await readFile(path.join(process.cwd(), "mobile/axis-mobile/eas.json"), "utf8");
     const packageJson = await readFile(path.join(process.cwd(), "mobile/axis-mobile/package.json"), "utf8");
 
-    expect(appConfig).toContain('"version": "0.2.0"');
-    expect(appConfig).toContain('"versionCode": 2');
+    expect(appConfig).toContain('"version": "0.3.0"');
+    expect(appConfig).toContain('"versionCode": 3');
+    expect(appConfig).toContain('"expo-notifications"');
     expect(appConfig).toContain('"policy": "appVersion"');
     expect(appConfig).toContain('"checkAutomatically": "ON_LOAD"');
     expect(easConfig).toContain('"channel": "preview"');

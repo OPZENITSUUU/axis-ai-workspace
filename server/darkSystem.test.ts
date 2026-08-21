@@ -52,7 +52,8 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("axis-send-ready");
     expect(home).toContain("axis-message-bubble");
     expect(home).toContain('enterKeyHint="send"');
-    expect(home).toContain('aria-label="Message your AXIS assistant"');
+    expect(home).toContain('"Message your AXIS assistant"');
+    expect(home).toContain('"Background task for AXIS"');
     expect(home).not.toContain("GEMINI_KEY");
     expect(home).toContain("SpeechRecognition");
     expect(home).toContain("navigator.clipboard.writeText");
@@ -74,6 +75,8 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("utterance.pitch = voiceTuning.pitch");
     expect(home).toContain("Install AXIS");
     expect(home).toContain("handleInstall");
+    expect(home).toContain("Background task alerts");
+    expect(home).toContain("queueBackgroundPrompt");
     expect(home).not.toContain("generativelanguage.googleapis.com");
     expect(css).toContain(".axis-message-actions");
     expect(css).toContain(".axis-voice-recording");

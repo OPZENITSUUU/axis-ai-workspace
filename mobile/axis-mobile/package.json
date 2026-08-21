@@ -13,6 +13,8 @@
   "dependencies": {
     "@expo/metro-runtime": "~6.1.2",
     "expo": "~54.0.29",
+    "expo-constants": "~18.0.14",
+    "expo-notifications": "~0.32.17",
     "expo-router": "~6.0.19",
     "expo-status-bar": "~3.0.9",
     "expo-updates": "~29.0.20",

@@ -22,9 +22,11 @@ import { gatewayUnavailableGuidance } from "@shared/providerGuidance";
 import { Streamdown } from "streamdown";
 import {
   ArrowUp,
+  Bell,
   Bot,
   Camera,
   Check,
+  Clock3,
   Command,
   Copy,
   Download,
@@ -129,6 +131,12 @@ function fileToBase64(file: File) {
   });
 }
 
+function base64UrlToUint8Array(value: string) {
+  const normalized = `${value}${"=".repeat((4 - (value.length % 4)) % 4)}`.replace(/-/g, "+").replace(/_/g, "/");
+  const raw = window.atob(normalized);
+  return Uint8Array.from(raw, char => char.charCodeAt(0));
+}
+
 function formatRelativeDate(value: Date | string) {
   const date = new Date(value);
   const now = new Date();
@@ -156,6 +164,7 @@ export default function Home() {
   const [mobileSheetOpen, setMobileSheetOpen] = useState(false);
   const [draftStatus, setDraftStatus] = useState<"saved" | "draft">("saved");
   const [isListening, setIsListening] = useState(false);
+  const [backgroundMode, setBackgroundMode] = useState(false);
   const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
   const [voiceTuning, setVoiceTuning] = useState(defaultVoiceTuning);
 
@@ -188,6 +197,7 @@ export default function Home() {
   const projectsQuery = trpc.projects.list.useQuery(undefined, { enabled: isAuthenticated });
   const filesQuery = trpc.files.list.useQuery(undefined, { enabled: isAuthenticated });
   const csvFilesQuery = trpc.files.listCsv.useQuery(undefined, { enabled: isAuthenticated && csvManagerOpen });
+  const notificationStatusQuery = trpc.notifications.status.useQuery(undefined, { enabled: isAuthenticated });
   const settingsQuery = trpc.workspace.settings.useQuery(undefined, { enabled: isAuthenticated });
   const exportWorkspaceQuery = trpc.workspace.export.useQuery(undefined, { enabled: false });
   const conversationQuery = trpc.conversations.get.useQuery(
@@ -206,6 +216,9 @@ export default function Home() {
   const selectConversationProvider = trpc.conversations.selectProvider.useMutation();
   const renameCsvFile = trpc.files.renameCsv.useMutation();
   const deleteCsvFile = trpc.files.deleteCsv.useMutation();
+  const updateNotificationPreferences = trpc.notifications.updatePreferences.useMutation();
+  const registerWebPush = trpc.notifications.registerWeb.useMutation();
+  const registerExpoPush = trpc.notifications.registerExpo.useMutation();
 
   useEffect(() => {
     if (!activeConversationId && conversationsQuery.data?.[0]) {
@@ -271,6 +284,30 @@ export default function Home() {
       setVoiceTuning(defaultVoiceTuning);
     }
   }, [user?.id]);
+
+  useEffect(() => {
+    const handleNativeMessage = (event: MessageEvent) => {
+      let payload: { type?: string; token?: string; message?: string; url?: string };
+      try { payload = JSON.parse(String(event.data)); } catch { return; }
+      if (payload.type === "axis-expo-push-token" && payload.token) {
+        void registerExpoPush.mutateAsync({ token: payload.token })
+          .then(() => updateNotificationPreferences.mutateAsync({ enabled: true }))
+          .then(() => { void notificationStatusQuery.refetch(); toast.success("Android task alerts are enabled."); })
+          .catch(() => toast.error("Android notification registration could not be saved."));
+      }
+      if (payload.type === "axis-expo-push-error") toast.error(payload.message || "Android notifications could not be enabled.");
+      if (payload.type === "axis-notification-open" && payload.url) {
+        const conversationId = Number(new URL(payload.url, window.location.origin).searchParams.get("conversation"));
+        if (Number.isInteger(conversationId) && conversationId > 0) setActiveConversationId(conversationId);
+      }
+    };
+    window.addEventListener("message", handleNativeMessage);
+    document.addEventListener("message", handleNativeMessage as EventListener);
+    return () => {
+      window.removeEventListener("message", handleNativeMessage);
+      document.removeEventListener("message", handleNativeMessage as EventListener);
+    };
+  }, [notificationStatusQuery, registerExpoPush, updateNotificationPreferences]);
 
   const ensureConversation = async () => {
     if (activeConversationId) return activeConversationId;
@@ -576,9 +613,89 @@ export default function Home() {
     }
   };
 
+  const enableTaskAlerts = async () => {
+    const nativeBridge = (window as Window & { ReactNativeWebView?: { postMessage: (value: string) => void } }).ReactNativeWebView;
+    if (nativeBridge) {
+      nativeBridge.postMessage(JSON.stringify({ type: "axis-request-expo-push" }));
+      toast("AXIS is asking Android for notification permission.");
+      return;
+    }
+    if (!notificationStatusQuery.data?.webPushAvailable) {
+      toast.error("Browser push is being configured. Try again shortly.");
+      return;
+    }
+    if (!("serviceWorker" in navigator) || !("PushManager" in window) || !("Notification" in window)) {
+      toast.error("This browser does not support private background task alerts.");
+      return;
+    }
+    try {
+      const permission = Notification.permission === "granted" ? "granted" : await Notification.requestPermission();
+      if (permission !== "granted") {
+        toast("Notification permission was not granted. You can enable it later in browser settings.");
+        return;
+      }
+      const registration = await navigator.serviceWorker.ready;
+      const existing = await registration.pushManager.getSubscription();
+      const subscription = existing ?? await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: base64UrlToUint8Array(notificationStatusQuery.data.webPushPublicKey || ""),
+      });
+      const keys = subscription.toJSON().keys;
+      if (!keys?.p256dh || !keys.auth) throw new Error("Browser subscription keys are unavailable.");
+      await registerWebPush.mutateAsync({ endpoint: subscription.endpoint, p256dh: keys.p256dh, auth: keys.auth });
+      await updateNotificationPreferences.mutateAsync({ enabled: true });
+      await notificationStatusQuery.refetch();
+      toast.success("Private task completion alerts are enabled on this device.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Browser notifications could not be enabled.");
+    }
+  };
+
+  const queueBackgroundPrompt = async (content: string) => {
+    if (!providerStatusQuery.data?.ready) {
+      setSettingsOpen(true);
+      toast.error("Background tasks are paused until the approved gateway is configured.");
+      return;
+    }
+    const clientRequestId = typeof crypto?.randomUUID === "function"
+      ? crypto.randomUUID().replace(/-/g, "")
+      : `axis${Date.now()}${Math.random().toString(36).slice(2, 14)}`;
+    try {
+      setDraft("");
+      setDraftStatus("saved");
+      const response = await fetch("/api/chat/background", {
+        method: "POST",
+        credentials: "include",
+        headers: getAuthenticatedHeaders(),
+        body: JSON.stringify({
+          conversationId: activeConversationId ?? undefined,
+          content,
+          attachmentIds: attachments.map(attachment => attachment.id),
+          clientRequestId,
+        }),
+      });
+      const payload = await response.json().catch(() => ({})) as { task?: { id: number }; conversation?: { id: number }; error?: string };
+      if (!response.ok || !payload.task) throw new Error(payload.error || "The task could not be queued.");
+      if (payload.conversation?.id) setActiveConversationId(payload.conversation.id);
+      setAttachments([]);
+      await Promise.all([
+        utils.conversations.list.invalidate(),
+        utils.backgroundTasks.list.invalidate(),
+        payload.conversation?.id ? utils.conversations.get.invalidate({ conversationId: payload.conversation.id }) : Promise.resolve(),
+      ]);
+      toast.success("AXIS is working in the background. You will get an alert when it is ready.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "The background task could not be queued.");
+    }
+  };
+
   const submitPrompt = async (text = draft) => {
     const content = text.trim();
     if (!content || isStreaming || streamLifecycleRef.current.isActive()) return;
+    if (backgroundMode) {
+      await queueBackgroundPrompt(content);
+      return;
+    }
     if (/^\/image(?:\s|$)/i.test(content)) {
       const prompt = content.replace(/^\/image\s*/i, "").trim();
       toast(prompt ? "Image generation is not active yet. Your prompt remains in the private draft; add an approved server-side image provider to enable it." : "Add a description after /image to prepare an image prompt.");
@@ -875,7 +992,7 @@ export default function Home() {
                 </div>
               )}
               <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className={cn("axis-composer rounded-2xl border p-2", draft.trim() && !isStreaming && "axis-composer-ready", isStreaming && "axis-composer-streaming")}>
-                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
+                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder={backgroundMode ? "Describe a task for AXIS to complete in the background…" : "Message your assistant…"} aria-label={backgroundMode ? "Background task for AXIS" : "Message your AXIS assistant"} enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,.csv,text/csv,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
@@ -884,12 +1001,13 @@ export default function Home() {
                     <button type="button" onClick={() => cameraInputRef.current?.click()} disabled={isStreaming || createConversation.isPending} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors disabled:opacity-50 sm:size-9" aria-label="Capture a private photo"><Camera className="size-4" /></button>
                     <button type="button" onClick={toggleVoiceInput} aria-pressed={isListening} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", isListening && "axis-voice-recording")} aria-label={isListening ? "Stop voice input" : "Start voice input"}>{isListening ? <Square className="size-3.5" /> : <Mic className="size-4" />}</button>
                     <button type="button" onClick={() => setVoiceFocusOpen(true)} className="axis-icon-control hidden size-10 place-items-center rounded-xl transition-colors sm:grid sm:size-9" aria-label="Open voice focus"><Volume2 className="size-4" /></button>
+                    <button type="button" onClick={() => setBackgroundMode(current => !current)} aria-pressed={backgroundMode} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", backgroundMode && "axis-settings-choice-active")} aria-label={backgroundMode ? "Turn off background task mode" : "Turn on background task mode"}><Clock3 className="size-4" /></button>
                     <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
-                    <span className="axis-muted-copy hidden text-[11px] sm:block">Enter to send · Shift + Enter for new line</span>
+                    <span className="axis-muted-copy hidden text-[11px] sm:block">{backgroundMode ? "Background task · alert on completion" : "Enter to send · Shift + Enter for new line"}</span>
                   </div>
                   <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className={cn("axis-primary-control size-10 rounded-xl p-0 hover:brightness-105 sm:size-9", draft.trim() && !isStreaming && providerStatusQuery.data?.ready && "axis-send-ready")}>
                     {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
-                    <span className="sr-only">Send message</span>
+                    <span className="sr-only">{backgroundMode ? "Queue background task" : "Send message"}</span>
                   </Button>
                 </div>
               </form>
@@ -928,6 +1046,7 @@ export default function Home() {
               <div className="py-4"><p className="text-sm font-medium">Assistant mode</p><p className="axis-muted-copy mt-0.5 text-xs">A private account-synced response style; AXIS keeps the same server-side provider boundary.</p><div className="mt-3 flex flex-wrap gap-2">{(["balanced", "study", "developer", "creative"] as const).map(mode => <button key={mode} onClick={() => void saveSetting({ assistantMode: mode })} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs capitalize", settingsQuery.data?.assistantMode === mode ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{mode}</button>)}</div></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Memory</p><p className="axis-muted-copy mt-0.5 text-xs">Use earlier messages in the same private chat.</p></div><button onClick={() => void saveSetting({ memoryEnabled: !settingsQuery.data?.memoryEnabled })} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", settingsQuery.data?.memoryEnabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{settingsQuery.data?.memoryEnabled ? "On" : "Off"}</button></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Privacy</p><p className="axis-muted-copy mt-0.5 text-xs">Strict keeps all workspace access user-scoped.</p></div><button onClick={() => void saveSetting({ privacy: settingsQuery.data?.privacy === "strict" ? "standard" : "strict" })} className="axis-settings-choice axis-settings-choice-inactive rounded-lg px-3 py-1.5 text-xs font-medium">{settingsQuery.data?.privacy || "strict"}</button></div>
+              <div className="py-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium">Background task alerts</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Receive a generic completion alert. AXIS never puts your private prompt or reply text in a notification.</p></div><button onClick={() => void enableTaskAlerts()} disabled={updateNotificationPreferences.isPending || registerWebPush.isPending || registerExpoPush.isPending} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50", notificationStatusQuery.data?.enabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{notificationStatusQuery.data?.enabled ? "Enabled" : "Enable"}</button></div><div className="mt-3 flex items-center justify-between gap-3"><span className="axis-muted-copy text-xs">Alert if a background task cannot finish</span><button onClick={() => void updateNotificationPreferences.mutateAsync({ errorAlerts: !notificationStatusQuery.data?.errorAlerts }).then(() => notificationStatusQuery.refetch())} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs", notificationStatusQuery.data?.errorAlerts ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{notificationStatusQuery.data?.errorAlerts ? "On" : "Off"}</button></div>{notificationStatusQuery.data?.recentTasks.some(task => task.status === "queued" || task.status === "running") && <p className="axis-accent-icon mt-3 inline-flex items-center gap-1.5 text-xs"><Clock3 className="size-3.5" /> AXIS has a private task in progress.</p>}</div>
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
               <div className="py-4"><p className="text-sm font-medium">Browser voice tuning</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Applies only to the private Listen action in this browser. AXIS does not send these controls or message audio to an AI provider.</p><label className="axis-muted-copy mt-3 block text-xs" htmlFor="voice-rate">Speech speed <span className="float-right font-mono">{voiceTuning.rate.toFixed(1)}×</span></label><input id="voice-rate" type="range" min="0.5" max="1.8" step="0.1" value={voiceTuning.rate} onChange={event => updateVoiceTuning({ rate: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /><label className="axis-muted-copy mt-4 block text-xs" htmlFor="voice-pitch">Speech pitch <span className="float-right font-mono">{voiceTuning.pitch.toFixed(1)}×</span></label><input id="voice-pitch" type="range" min="0.5" max="1.5" step="0.1" value={voiceTuning.pitch} onChange={event => updateVoiceTuning({ pitch: Number(event.target.value) })} className="mt-2 w-full accent-[color:var(--axis-accent)]" /></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Install AXIS</p><p className="axis-muted-copy mt-0.5 text-xs">Add this private workspace to your device for an app-like browser experience.</p></div>{isInstalled ? <span className="axis-settings-choice axis-settings-choice-active rounded-lg px-3 py-1.5 text-xs font-medium">Installed</span> : canInstall ? <button onClick={() => void handleInstall()} className="axis-toolbar-control rounded-xl px-3 py-2 text-xs font-medium">Install</button> : <span className="axis-muted-copy text-xs">Use browser menu</span>}</div>

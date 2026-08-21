@@ -12,11 +12,13 @@ describe("AXIS installable PWA shell", () => {
     expect(main).toContain('navigator.serviceWorker.addEventListener("controllerchange"');
     expect(worker).toContain('url.pathname.startsWith("/api/")');
     expect(worker).toContain('caches.match("/offline.html")');
-    expect(worker).toContain('const CACHE_NAME = "axis-app-shell-v2"');
+    expect(worker).toContain('const CACHE_NAME = "axis-app-shell-v3"');
     expect(worker).toContain('fetch(request).catch(async () => await caches.match("/offline.html"))');
     expect(worker).toContain('fetch(request).then(response =>');
     expect(offline).toContain("AXIS is offline");
     expect(offline).toContain("never shows cached chat content");
+    expect(worker).toContain('self.addEventListener("push"');
+    expect(worker).toContain('self.addEventListener("notificationclick"');
   });
 
   it("exposes install controls only through the guarded browser install event", async () => {

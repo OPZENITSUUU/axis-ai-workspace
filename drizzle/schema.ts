@@ -1,4 +1,4 @@
-import { boolean, index, int, mysqlEnum, mysqlTable, text, timestamp, varchar } from "drizzle-orm/mysql-core";
+import { boolean, index, int, mysqlEnum, mysqlTable, text, timestamp, uniqueIndex, varchar } from "drizzle-orm/mysql-core";
 
 /**
  * Core user table backing auth flow.
@@ -57,6 +57,8 @@ export const userSettings = mysqlTable(
     preferredModel: varchar("preferredModel", { length: 128 }),
     memoryEnabled: boolean("memoryEnabled").notNull().default(true),
     privacy: privacyMode.notNull().default("strict"),
+    backgroundTaskNotifications: boolean("backgroundTaskNotifications").notNull().default(false),
+    backgroundTaskErrors: boolean("backgroundTaskErrors").notNull().default(true),
     updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
   },
   table => [index("user_settings_user_idx").on(table.userId)],
@@ -121,6 +123,84 @@ export const attachments = mysqlTable(
   ],
 );
 
+export const backgroundTaskStatus = mysqlEnum("background_task_status", ["queued", "running", "completed", "failed", "cancelled"]);
+
+export const backgroundTasks = mysqlTable(
+  "background_tasks",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    conversationId: int("conversationId").notNull(),
+    clientRequestId: varchar("clientRequestId", { length: 64 }).notNull(),
+    prompt: text("prompt").notNull(),
+    attachmentIds: text("attachmentIds").notNull(),
+    provider: varchar("provider", { length: 32 }).notNull(),
+    model: varchar("model", { length: 128 }),
+    status: backgroundTaskStatus.notNull().default("queued"),
+    userMessageId: int("userMessageId"),
+    assistantMessageId: int("assistantMessageId"),
+    attemptCount: int("attemptCount").notNull().default(0),
+    claimedAt: timestamp("claimedAt"),
+    completedAt: timestamp("completedAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("background_tasks_user_request_uq").on(table.userId, table.clientRequestId),
+    index("background_tasks_user_status_created_idx").on(table.userId, table.status, table.createdAt),
+    index("background_tasks_status_claimed_idx").on(table.status, table.claimedAt),
+    index("background_tasks_user_conversation_idx").on(table.userId, table.conversationId),
+  ],
+);
+
+export const notificationProvider = mysqlEnum("notification_provider", ["web_push", "expo_push"]);
+
+export const notificationDevices = mysqlTable(
+  "notification_devices",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    provider: notificationProvider.notNull(),
+    tokenHash: varchar("tokenHash", { length: 64 }).notNull(),
+    expoPushToken: text("expoPushToken"),
+    webPushEndpoint: text("webPushEndpoint"),
+    webPushP256dh: varchar("webPushP256dh", { length: 255 }),
+    webPushAuth: varchar("webPushAuth", { length: 255 }),
+    enabled: boolean("enabled").notNull().default(true),
+    lastSeenAt: timestamp("lastSeenAt").defaultNow().notNull(),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    uniqueIndex("notification_devices_provider_token_hash_uq").on(table.provider, table.tokenHash),
+    index("notification_devices_user_provider_enabled_idx").on(table.userId, table.provider, table.enabled),
+  ],
+);
+
+export const notificationEventType = mysqlEnum("notification_event_type", ["task_complete", "task_error"]);
+export const notificationDeliveryStatus = mysqlEnum("notification_delivery_status", ["queued", "sent", "failed"]);
+
+export const notificationEvents = mysqlTable(
+  "notification_events",
+  {
+    id: int("id").autoincrement().primaryKey(),
+    userId: int("userId").notNull(),
+    backgroundTaskId: int("backgroundTaskId").notNull(),
+    deviceId: int("deviceId").notNull(),
+    type: notificationEventType.notNull(),
+    status: notificationDeliveryStatus.notNull().default("queued"),
+    receiptId: varchar("receiptId", { length: 255 }),
+    failureCode: varchar("failureCode", { length: 128 }),
+    sentAt: timestamp("sentAt"),
+    createdAt: timestamp("createdAt").defaultNow().notNull(),
+    updatedAt: timestamp("updatedAt").defaultNow().onUpdateNow().notNull(),
+  },
+  table => [
+    index("notification_events_task_device_idx").on(table.backgroundTaskId, table.deviceId),
+    index("notification_events_user_status_idx").on(table.userId, table.status),
+  ],
+);
+
 export type Conversation = typeof conversations.$inferSelect;
 export type InsertConversation = typeof conversations.$inferInsert;
 export type Project = typeof projects.$inferSelect;
@@ -131,3 +211,9 @@ export type ChatMessage = typeof messages.$inferSelect;
 export type InsertChatMessage = typeof messages.$inferInsert;
 export type Attachment = typeof attachments.$inferSelect;
 export type InsertAttachment = typeof attachments.$inferInsert;
+export type BackgroundTask = typeof backgroundTasks.$inferSelect;
+export type InsertBackgroundTask = typeof backgroundTasks.$inferInsert;
+export type NotificationDevice = typeof notificationDevices.$inferSelect;
+export type InsertNotificationDevice = typeof notificationDevices.$inferInsert;
+export type NotificationEvent = typeof notificationEvents.$inferSelect;
+export type InsertNotificationEvent = typeof notificationEvents.$inferInsert;

@@ -21,6 +21,8 @@
 - [x] Publish the sanitized AXIS automatic companion update flow, PWA cache correction, release guidance, and regression coverage to the public GitHub repository (verified public commit `1c545d2`).
 - [x] Integrate the supplied premium midnight-glass UI reference with performance-conscious aurora motion, tactile controls, refined chat surfaces, and responsive web behavior (desktop and Android-WebView-like mobile layouts verified).
 - [ ] Validate the premium redesign inside the actual Expo Android companion WebView, including the composer, sidebar or sheet, messages, and update/motion fallback behavior.
+- [ ] Add secure per-user background task status, completion alerts, and opt-in browser/PWA plus Android push notifications without exposing private task content in notification payloads.
+- [ ] Synchronize the completed background-alert capability across AXIS web, PWA, Android companion, deployed workspace, and public GitHub source.
 - [x] Publish the sanitized AXIS premium interaction, midnight-glass motion, responsive chat, and regression update to the public GitHub repository (verified public commit `6947939`).
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).

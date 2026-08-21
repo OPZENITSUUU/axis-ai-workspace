@@ -2,17 +2,20 @@ import { TRPCError } from "@trpc/server";
 import { z } from "zod";
 import {
   createConversation,
+  disableNotificationDeviceForUser,
   createProject,
   deleteCsvAttachmentForUser,
   deleteWorkspaceDataForUser,
   deleteProjectForUser,
   exportWorkspaceForUser,
   getAttachmentsForConversation,
+  getBackgroundTaskForUser,
   getConversationForUser,
   listCsvAttachmentsForUser,
   getMessagesForConversation,
   getUserSettings,
   listConversationsForUser,
+  listBackgroundTasksForUser,
   listAttachmentsForUser,
   listProjectsForUser,
   renameCsvAttachmentForUser,
@@ -21,12 +24,14 @@ import {
   setConversationProject,
   updateProjectForUser,
   updateUserSettings,
+  upsertNotificationDevice,
 } from "./db";
 import { getSessionCookieOptions } from "./_core/cookies";
 import { systemRouter } from "./_core/systemRouter";
 import { protectedProcedure, publicProcedure, router } from "./_core/trpc";
 import { COOKIE_NAME } from "@shared/const";
 import { getProviderStatus } from "./modelProvider";
+import { getWebPushPublicKey, hashNotificationToken } from "./notificationService";
 
 const conversationIdSchema = z.object({ conversationId: z.number().int().positive() });
 const projectIdSchema = z.object({ projectId: z.number().int().positive() });
@@ -38,6 +43,8 @@ const settingsSchema = z.object({
   preferredModel: z.string().trim().max(128).nullable().optional(),
   memoryEnabled: z.boolean().optional(),
   privacy: z.enum(["strict", "standard"]).optional(),
+  backgroundTaskNotifications: z.boolean().optional(),
+  backgroundTaskErrors: z.boolean().optional(),
 });
 
 export const appRouter = router({
@@ -52,6 +59,71 @@ export const appRouter = router({
   }),
   providers: router({
     status: protectedProcedure.query(() => getProviderStatus()),
+  }),
+  notifications: router({
+    status: protectedProcedure.query(async ({ ctx }) => {
+      const [settings, tasks] = await Promise.all([getUserSettings(ctx.user.id), listBackgroundTasksForUser(ctx.user.id)]);
+      return {
+        enabled: settings.backgroundTaskNotifications,
+        errorAlerts: settings.backgroundTaskErrors,
+        webPushAvailable: Boolean(getWebPushPublicKey()),
+        webPushPublicKey: getWebPushPublicKey(),
+        recentTasks: tasks.slice(0, 6).map(task => ({
+          id: task.id,
+          conversationId: task.conversationId,
+          status: task.status,
+          createdAt: task.createdAt,
+          completedAt: task.completedAt,
+        })),
+      };
+    }),
+    updatePreferences: protectedProcedure
+      .input(z.object({ enabled: z.boolean().optional(), errorAlerts: z.boolean().optional() }))
+      .mutation(({ ctx, input }) => updateUserSettings(ctx.user.id, {
+        ...(input.enabled !== undefined ? { backgroundTaskNotifications: input.enabled } : {}),
+        ...(input.errorAlerts !== undefined ? { backgroundTaskErrors: input.errorAlerts } : {}),
+      })),
+    registerWeb: protectedProcedure
+      .input(z.object({ endpoint: z.string().url().max(2_000), p256dh: z.string().min(16).max(255), auth: z.string().min(8).max(255) }))
+      .mutation(({ ctx, input }) => {
+        if (!getWebPushPublicKey()) throw new TRPCError({ code: "PRECONDITION_FAILED", message: "Browser notifications are not configured yet." });
+        return upsertNotificationDevice({
+          userId: ctx.user.id,
+          provider: "web_push",
+          tokenHash: hashNotificationToken(input.endpoint),
+          webPushEndpoint: input.endpoint,
+          webPushP256dh: input.p256dh,
+          webPushAuth: input.auth,
+        });
+      }),
+    unregisterWeb: protectedProcedure
+      .input(z.object({ endpoint: z.string().url().max(2_000) }))
+      .mutation(async ({ ctx, input }) => {
+        await disableNotificationDeviceForUser(ctx.user.id, "web_push", hashNotificationToken(input.endpoint));
+        return { success: true } as const;
+      }),
+    registerExpo: protectedProcedure
+      .input(z.object({ token: z.string().regex(/^(Exponent|Expo)PushToken\[[^\]]+\]$/).max(255) }))
+      .mutation(({ ctx, input }) => upsertNotificationDevice({
+        userId: ctx.user.id,
+        provider: "expo_push",
+        tokenHash: hashNotificationToken(input.token),
+        expoPushToken: input.token,
+      })),
+    unregisterExpo: protectedProcedure
+      .input(z.object({ token: z.string().regex(/^(Exponent|Expo)PushToken\[[^\]]+\]$/).max(255) }))
+      .mutation(async ({ ctx, input }) => {
+        await disableNotificationDeviceForUser(ctx.user.id, "expo_push", hashNotificationToken(input.token));
+        return { success: true } as const;
+      }),
+  }),
+  backgroundTasks: router({
+    list: protectedProcedure.query(({ ctx }) => listBackgroundTasksForUser(ctx.user.id)),
+    get: protectedProcedure.input(z.object({ taskId: z.number().int().positive() })).query(async ({ ctx, input }) => {
+      const task = await getBackgroundTaskForUser(ctx.user.id, input.taskId);
+      if (!task) throw new TRPCError({ code: "NOT_FOUND", message: "Background task not found" });
+      return task;
+    }),
   }),
   workspace: router({
     settings: protectedProcedure.query(({ ctx }) => getUserSettings(ctx.user.id)),

@@ -1,12 +1,18 @@
 import { StatusBar } from "expo-status-bar";
+import Constants from "expo-constants";
+import * as Notifications from "expo-notifications";
 import * as Updates from "expo-updates";
-import { type ComponentProps, useEffect, useRef, useState } from "react";
-import { ActivityIndicator, BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
+import { type ComponentProps, useCallback, useEffect, useRef, useState } from "react";
+import { ActivityIndicator, Alert, BackHandler, Platform, Pressable, StyleSheet, Text, View } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import WebView, { type WebViewNavigation } from "react-native-webview";
 import { AXIS_WEB_URL } from "../src/config";
 
 const ANDROID_AUDIO_CAPTURE = "android.webkit.resource.AUDIO_CAPTURE";
+
+Notifications.setNotificationHandler({
+  handleNotification: async () => ({ shouldShowBanner: true, shouldShowList: true, shouldPlaySound: false, shouldSetBadge: false }),
+});
 
 type AndroidPermissionRequest = {
   resources: string[];
@@ -20,6 +26,7 @@ export default function AxisMobileHome() {
   const [isLoading, setIsLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [updateState, setUpdateState] = useState<"idle" | "downloading" | "restarting">("idle");
+  const pendingNotificationUrlRef = useRef<string | null>(null);
   const { isUpdateAvailable, isUpdatePending } = Updates.useUpdates();
 
   useEffect(() => {
@@ -66,6 +73,62 @@ export default function AxisMobileHome() {
     return () => subscription.remove();
   }, [canGoBack]);
 
+  const postToWorkspace = useCallback((payload: Record<string, unknown>) => {
+    webViewRef.current?.postMessage(JSON.stringify(payload));
+  }, []);
+
+  const forwardNotificationUrl = useCallback((url: unknown) => {
+    if (typeof url !== "string" || !url.startsWith("/")) return;
+    pendingNotificationUrlRef.current = url;
+    postToWorkspace({ type: "axis-notification-open", url });
+  }, [postToWorkspace]);
+
+  useEffect(() => {
+    const initial = Notifications.getLastNotificationResponse();
+    forwardNotificationUrl(initial?.notification.request.content.data?.url);
+    const responseListener = Notifications.addNotificationResponseReceivedListener(response => {
+      forwardNotificationUrl(response.notification.request.content.data?.url);
+    });
+    return () => responseListener.remove();
+  }, [forwardNotificationUrl]);
+
+  const requestPushPermission = useCallback(async () => {
+    try {
+      if (Platform.OS === "android") {
+        await Notifications.setNotificationChannelAsync("axis-tasks", {
+          name: "AXIS task updates",
+          importance: Notifications.AndroidImportance.DEFAULT,
+          vibrationPattern: [0, 180, 90, 180],
+          lightColor: "#85dfb9",
+        });
+      }
+      const current = await Notifications.getPermissionsAsync();
+      const permission = current.status === "granted" ? current : await Notifications.requestPermissionsAsync();
+      if (permission.status !== "granted") {
+        postToWorkspace({ type: "axis-expo-push-error", message: "Notification permission was not granted." });
+        return;
+      }
+      const configuredProjectId = (Constants.expoConfig?.extra?.eas as { projectId?: string } | undefined)?.projectId;
+      const projectId = configuredProjectId ?? Constants.easConfig?.projectId;
+      if (!projectId) throw new Error("AXIS notification project is unavailable.");
+      const token = (await Notifications.getExpoPushTokenAsync({ projectId })).data;
+      postToWorkspace({ type: "axis-expo-push-token", token });
+    } catch (error) {
+      const message = error instanceof Error ? error.message : "Android notifications could not be enabled.";
+      postToWorkspace({ type: "axis-expo-push-error", message });
+      Alert.alert("AXIS notifications", "Notifications could not be enabled on this device yet.");
+    }
+  }, [postToWorkspace]);
+
+  const handleWorkspaceMessage = useCallback((event: { nativeEvent: { data: string } }) => {
+    try {
+      const message = JSON.parse(event.nativeEvent.data) as { type?: string };
+      if (message.type === "axis-request-expo-push") void requestPushPermission();
+    } catch {
+      // Ignore malformed messages from the hosted workspace.
+    }
+  }, [requestPushPermission]);
+
   const retryWorkspace = () => {
     setLoadError(false);
     setIsLoading(true);
@@ -103,12 +166,16 @@ export default function AxisMobileHome() {
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
           onNavigationStateChange={handleNavigationChange}
+          onMessage={handleWorkspaceMessage}
           {...androidPermissionProps}
           onLoadStart={() => {
             setIsLoading(true);
             setLoadError(false);
           }}
-          onLoadEnd={() => setIsLoading(false)}
+          onLoadEnd={() => {
+            setIsLoading(false);
+            if (pendingNotificationUrlRef.current) postToWorkspace({ type: "axis-notification-open", url: pendingNotificationUrlRef.current });
+          }}
           onError={() => {
             setIsLoading(false);
             setLoadError(true);

@@ -2,20 +2,27 @@
   "expo": {
     "name": "AXIS",
     "slug": "axis-mobile",
-    "version": "0.2.0",
+    "version": "0.3.0",
     "orientation": "portrait",
     "scheme": "axis",
     "userInterfaceStyle": "dark",
     "android": {
       "package": "space.manus.axis.mobile",
       "edgeToEdgeEnabled": true,
-      "versionCode": 2,
+      "versionCode": 3,
       "permissions": [
         "RECORD_AUDIO"
       ]
     },
     "plugins": [
-      "expo-router"
+      "expo-router",
+      [
+        "expo-notifications",
+        {
+          "defaultChannel": "axis-tasks",
+          "color": "#85dfb9"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
