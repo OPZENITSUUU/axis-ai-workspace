@@ -12,11 +12,12 @@ import {
   renameConversation,
 } from "./db";
 import { ChatTurn } from "./geminiProvider";
-import { getAssistantModeInstruction } from "./assistantMode";
+import { getAccountMemoryInstruction, getAssistantModeInstruction } from "./assistantMode";
 import { getProviderStatus, isProviderId, streamModelResponse } from "./modelProvider";
 import { getOmniRouteReadiness } from "./omniRouteProvider";
 import { sdk } from "./_core/sdk";
 import { storageGetSignedUrl, storagePut } from "./storage";
+import { resolveUrlSummaryPrompt } from "./urlSummaryService";
 
 const MAX_FILE_SIZE_BYTES = 10 * 1024 * 1024;
 const MAX_ATTACHMENTS_PER_PROMPT = 4;
@@ -164,6 +165,15 @@ export function registerChatRoutes(app: Express) {
         }
       }
 
+      let modelContent = content;
+      try {
+        const urlSummaryPrompt = await resolveUrlSummaryPrompt(content);
+        if (urlSummaryPrompt) modelContent = urlSummaryPrompt;
+      } catch (error) {
+        res.status(400).json({ error: error instanceof Error ? error.message : "The URL could not be summarized safely." });
+        return;
+      }
+
       let conversation = body.conversationId
         ? await getConversationForUser(user.id, Number(body.conversationId))
         : undefined;
@@ -194,12 +204,13 @@ export function registerChatRoutes(app: Express) {
         role: message.role === "assistant" ? "model" : "user" as "user",
         parts: [{ text: message.content }],
       }));
+      const accountMemory = getAccountMemoryInstruction(settings.memoryEnabled, settings.memoryInstructions);
       const modelTurns: ChatTurn[] = [{
         role: "user",
-        parts: [{ text: getAssistantModeInstruction(settings.assistantMode) }],
+        parts: [{ text: [getAssistantModeInstruction(settings.assistantMode), accountMemory].filter(Boolean).join("\n\n") }],
       }, ...historicalTurns];
 
-      const messageParts: ChatTurn["parts"] = [{ text: content }];
+      const messageParts: ChatTurn["parts"] = [{ text: modelContent }];
       for (const attachment of attachments) {
         if (attachment.extractedText) {
           messageParts.push({
@@ -216,6 +227,7 @@ export function registerChatRoutes(app: Express) {
       }
       modelTurns.push({ role: "user", parts: messageParts });
 
+      const generationStartedAt = Date.now();
       let responseText = "";
       const preferredProvider = isProviderId(conversation.provider) ? conversation.provider : undefined;
       for await (const chunk of streamModelResponse(modelTurns, controller.signal, preferredProvider, conversation.model, notice => {
@@ -225,11 +237,14 @@ export function registerChatRoutes(app: Express) {
         sendEvent(res, "token", { text: chunk });
       }
 
-      await createMessage(user.id, conversation.id, "assistant", responseText || "I could not generate a response.");
+      const completedResponse = responseText || "I could not generate a response.";
+      const generationDurationMs = Math.max(0, Date.now() - generationStartedAt);
+      const generatedWordCount = completedResponse.trim() ? completedResponse.trim().split(/\s+/).length : 0;
+      await createMessage(user.id, conversation.id, "assistant", completedResponse, "complete", { generationDurationMs, generatedWordCount });
       if (conversation.title === "New conversation") {
         await renameConversation(user.id, conversation.id, content.slice(0, 80));
       }
-      sendEvent(res, "done", { conversationId: conversation.id });
+      sendEvent(res, "done", { conversationId: conversation.id, generationDurationMs, generatedWordCount });
       res.end();
     } catch (error) {
       const message = error instanceof Error ? error.message : "The chat request failed.";

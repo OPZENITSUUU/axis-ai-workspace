@@ -23,6 +23,14 @@
 - [ ] Validate the premium redesign inside the actual Expo Android companion WebView, including the composer, sidebar or sheet, messages, and update/motion fallback behavior.
 - [ ] Add secure per-user background task status, completion alerts, and opt-in browser/PWA plus Android push notifications without exposing private task content in notification payloads.
 - [ ] Synchronize the completed background-alert capability across AXIS web, PWA, Android companion, deployed workspace, and public GitHub source.
+- [x] Publish the sanitized AXIS background task, notification, PWA alert, Android companion, migration, test, and setup-documentation update to the public GitHub repository (verified public commit `c48880b`).
+- [x] Add textbook-style KaTeX math rendering and safe Mermaid diagram rendering for assistant Markdown without enabling arbitrary code execution.
+- [x] Add a one-click code-block file exporter with user-selected safe extensions and browser-local downloads.
+- [x] Add a compact prompt-library modal with useful templates that insert into the composer without auto-sending.
+- [x] Add response duration and generated-word metrics without presenting inaccurate token counts.
+- [x] Add account-scoped editable memory instructions and inject them server-side into future private conversations.
+- [x] Add a server-side `/url` summarizer with URL validation, private request handling, size/time bounds, and SSRF safeguards.
+- [x] Add a browser-local focus audio control with generated ambient noise and no external audio files, autoplay, or uploaded listening analytics.
 - [x] Publish the sanitized AXIS premium interaction, midnight-glass motion, responsive chat, and regression update to the public GitHub repository (verified public commit `6947939`).
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).

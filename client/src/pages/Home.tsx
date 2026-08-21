@@ -11,6 +11,13 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useInstallPrompt } from "@/hooks/useInstallPrompt";
 import { trpc } from "@/lib/trpc";
@@ -20,12 +27,14 @@ import { startLogin } from "@/const";
 import { cn } from "@/lib/utils";
 import { gatewayUnavailableGuidance } from "@shared/providerGuidance";
 import { Streamdown } from "streamdown";
+import "katex/dist/katex.min.css";
 import {
   ArrowUp,
   Bell,
   Bot,
   Camera,
   Check,
+  ChevronDown,
   Clock3,
   Command,
   Copy,
@@ -33,11 +42,13 @@ import {
   FileText,
   FolderKanban,
   Image as ImageIcon,
+  Library,
   Loader2,
   Menu,
   MessageSquare,
   Mic,
   Moon,
+  Music2,
   Paperclip,
   PanelLeftClose,
   Pencil,
@@ -59,6 +70,8 @@ type ChatEntry = {
   id: number;
   role: "user" | "assistant";
   content: string;
+  generationDurationMs?: number | null;
+  generatedWordCount?: number | null;
 };
 
 type PendingAttachment = {
@@ -99,6 +112,46 @@ const supportedFileTypes = new Set([
 ]);
 
 const defaultVoiceTuning = { rate: 1, pitch: 1 };
+
+const promptTemplates = [
+  { title: "Code bug fixer", detail: "Find root cause, safe fix, and test plan.", prompt: "Review the following code for bugs, security issues, and performance problems. Explain the root cause, give a minimal safe fix, and include tests.\n\n[PASTE CODE HERE]" },
+  { title: "YouTube script", detail: "Create a hook, structure, and clear CTA.", prompt: "Write a high-retention YouTube script about [TOPIC] with a strong hook, clear sections, practical examples, and a natural call to action." },
+  { title: "Resume writer", detail: "Turn experience into concise impact bullets.", prompt: "Help me write a targeted resume and cover letter for [ROLE]. Ask only for missing essentials, then use achievement-focused bullets and honest language." },
+  { title: "Explain simply", detail: "Teach a hard topic with a friendly analogy.", prompt: "Explain [TOPIC] as if I am five years old. Use one simple analogy, short steps, and a quick recap without being patronizing." },
+] as const;
+
+const codeExtensionByLanguage: Record<string, string> = {
+  bash: "sh", c: "c", cpp: "cpp", csharp: "cs", css: "css", html: "html", java: "java", javascript: "js", json: "json", jsx: "jsx", markdown: "md", md: "md", php: "php", python: "py", ruby: "rb", rust: "rs", shell: "sh", sql: "sql", ts: "ts", tsx: "tsx", typescript: "ts",
+};
+
+const codeExportExtensionsByLanguage: Record<string, readonly string[]> = {
+  bash: ["sh", "bash", "txt"], c: ["c", "h", "txt"], cpp: ["cpp", "cc", "h", "txt"], csharp: ["cs", "txt"], css: ["css", "txt"], html: ["html", "htm", "txt"], java: ["java", "txt"], javascript: ["js", "mjs", "txt"], json: ["json", "txt"], jsx: ["jsx", "js", "txt"], markdown: ["md", "txt"], md: ["md", "txt"], php: ["php", "txt"], python: ["py", "txt"], ruby: ["rb", "txt"], rust: ["rs", "txt"], shell: ["sh", "bash", "txt"], sql: ["sql", "txt"], ts: ["ts", "tsx", "txt"], tsx: ["tsx", "ts", "txt"], typescript: ["ts", "tsx", "txt"], text: ["txt"],
+};
+
+const safeCodeExtensions = new Set(Object.values(codeExportExtensionsByLanguage).flat());
+
+function getCodeBlocks(content: string) {
+  return Array.from(content.matchAll(/```([a-zA-Z0-9+#-]*)\s*\n([\s\S]*?)```/g)).map((match, index) => ({
+    id: index,
+    language: match[1]?.toLowerCase() || "text",
+    code: match[2] || "",
+  }));
+}
+
+function getCodeExportExtensions(language: string) {
+  return codeExportExtensionsByLanguage[language] || [codeExtensionByLanguage[language] || "txt", "txt"];
+}
+
+function downloadCodeFile(code: string, extension: string, index: number) {
+  const safeExtension = safeCodeExtensions.has(extension) ? extension : "txt";
+  const blob = new Blob([code], { type: "text/plain;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement("a");
+  anchor.href = url;
+  anchor.download = `axis-code-${index + 1}.${safeExtension}`;
+  anchor.click();
+  URL.revokeObjectURL(url);
+}
 
 function clampVoiceTuning(value: unknown, minimum: number, maximum: number, fallback: number) {
   const numeric = typeof value === "number" ? value : Number(value);
@@ -167,6 +220,9 @@ export default function Home() {
   const [backgroundMode, setBackgroundMode] = useState(false);
   const [voiceFocusOpen, setVoiceFocusOpen] = useState(false);
   const [voiceTuning, setVoiceTuning] = useState(defaultVoiceTuning);
+  const [promptLibraryOpen, setPromptLibraryOpen] = useState(false);
+  const [focusAudioActive, setFocusAudioActive] = useState(false);
+  const [streamedMetrics, setStreamedMetrics] = useState<{ generationDurationMs?: number; generatedWordCount?: number }>({});
 
   const handleInstall = async () => {
     const outcome = await install();
@@ -187,6 +243,15 @@ export default function Home() {
   const messageEndRef = useRef<HTMLDivElement>(null);
   const streamLifecycleRef = useRef(createChatSubmissionLifecycle());
   const voiceRecognitionRef = useRef<BrowserSpeechRecognition | null>(null);
+  const focusAudioRef = useRef<{ context: AudioContext; source: AudioBufferSourceNode } | null>(null);
+
+  useEffect(() => () => {
+    const activeAudio = focusAudioRef.current;
+    if (!activeAudio) return;
+    activeAudio.source.stop();
+    void activeAudio.context.close();
+    focusAudioRef.current = null;
+  }, []);
 
   const conversationsQuery = trpc.conversations.list.useQuery(undefined, {
     enabled: isAuthenticated,
@@ -547,6 +612,37 @@ export default function Home() {
     }
   };
 
+  const toggleFocusAudio = async () => {
+    if (focusAudioRef.current) {
+      const { context, source } = focusAudioRef.current;
+      source.stop();
+      await context.close();
+      focusAudioRef.current = null;
+      setFocusAudioActive(false);
+      toast("Focus audio stopped.");
+      return;
+    }
+    const AudioContextConstructor = window.AudioContext || (window as Window & { webkitAudioContext?: typeof AudioContext }).webkitAudioContext;
+    if (!AudioContextConstructor) {
+      toast.error("Focus audio is unavailable in this browser.");
+      return;
+    }
+    const context = new AudioContextConstructor();
+    const buffer = context.createBuffer(1, context.sampleRate * 2, context.sampleRate);
+    const channel = buffer.getChannelData(0);
+    for (let index = 0; index < channel.length; index += 1) channel[index] = (Math.random() * 2 - 1) * 0.32;
+    const source = context.createBufferSource();
+    const gain = context.createGain();
+    source.buffer = buffer;
+    source.loop = true;
+    gain.gain.value = 0.018;
+    source.connect(gain).connect(context.destination);
+    source.start();
+    focusAudioRef.current = { context, source };
+    setFocusAudioActive(true);
+    toast("Local focus noise is playing. AXIS does not upload or track listening.");
+  };
+
   const speakAssistantMessage = (content: string) => {
     if (!("speechSynthesis" in window) || typeof SpeechSynthesisUtterance === "undefined") {
       toast.error("Text-to-speech is unavailable in this browser.");
@@ -718,6 +814,7 @@ export default function Home() {
     }
     setPendingPrompt(preview.pendingPrompt);
     setStreamedResponse(preview.streamedResponse);
+    setStreamedMetrics({});
     setIsStreaming(true);
 
     try {
@@ -753,6 +850,8 @@ export default function Home() {
           error?: string;
           from?: string;
           to?: string;
+          generationDurationMs?: number;
+          generatedWordCount?: number;
         };
 
         if (eventName === "conversation" && payload.id) {
@@ -764,6 +863,9 @@ export default function Home() {
         }
         if (eventName === "provider_fallback" && payload.from && payload.to) {
           toast(`AXIS switched from ${payload.from} to ${payload.to} before the response started.`);
+        }
+        if (eventName === "done") {
+          setStreamedMetrics({ generationDurationMs: payload.generationDurationMs, generatedWordCount: payload.generatedWordCount });
         }
         if (eventName === "error") throw new Error(payload.error || "The assistant could not respond.");
       };
@@ -944,6 +1046,8 @@ export default function Home() {
           </div>
             <div className="flex items-center gap-1">
             <span className="axis-muted-copy hidden rounded-full border border-white/10 px-2 py-1 text-[10px] capitalize lg:inline-flex">{settingsQuery.data?.assistantMode || "balanced"}</span>
+            <button onClick={() => setPromptLibraryOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex" aria-label="Open prompt library"><Library className="size-3.5" /> Prompts</button>
+            <button onClick={() => void toggleFocusAudio()} aria-pressed={focusAudioActive} className={cn("axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex", focusAudioActive && "axis-settings-choice-active")} aria-label={focusAudioActive ? "Stop local focus audio" : "Start local focus audio"}><Music2 className="size-3.5" /> {focusAudioActive ? "Focus on" : "Focus"}</button>
             {!isInstalled && canInstall && <button onClick={() => void handleInstall()} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors md:flex" aria-label="Install AXIS app"><Download className="size-3.5" /> Install</button>}
             <button onClick={exportConversation} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors xl:flex" aria-label="Export current private conversation"><Download className="size-3.5" /> Export</button>
             <button onClick={() => setCommandOpen(true)} className="axis-toolbar-control hidden items-center gap-2 rounded-lg px-3 py-2 text-xs font-medium transition-colors lg:flex"><Search className="size-3.5" /> Search <kbd className="rounded border border-current/20 px-1 font-mono text-[9px]">⌘K</kbd></button>
@@ -966,7 +1070,7 @@ export default function Home() {
                 <div className="space-y-7">
                   {storedMessages.map(message => <MessageBubble key={message.id} message={message} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />)}
                   {pendingPrompt && <MessageBubble message={{ id: -1, role: "user", content: pendingPrompt }} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />}
-                  {(isStreaming || streamedResponse) && <MessageBubble message={{ id: -2, role: "assistant", content: streamedResponse }} loading={isStreaming && !streamedResponse} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />}
+                  {(isStreaming || streamedResponse) && <MessageBubble message={{ id: -2, role: "assistant", content: streamedResponse, ...streamedMetrics }} loading={isStreaming && !streamedResponse} onCopy={copyAssistantMessage} onSpeak={speakAssistantMessage} />}
                 </div>
               ) : (
                 <EmptyConversation
@@ -992,7 +1096,7 @@ export default function Home() {
                 </div>
               )}
               <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className={cn("axis-composer rounded-2xl border p-2", draft.trim() && !isStreaming && "axis-composer-ready", isStreaming && "axis-composer-streaming")}>
-                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder={backgroundMode ? "Describe a task for AXIS to complete in the background…" : "Message your assistant…"} aria-label={backgroundMode ? "Background task for AXIS" : "Message your AXIS assistant"} enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
+                <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder={backgroundMode ? "Describe a task for AXIS to complete in the background…" : "Message your assistant… Try /url https://example.com"} aria-label={backgroundMode ? "Background task for AXIS" : "Message your AXIS assistant"} enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
                     <input ref={fileInputRef} type="file" accept=".pdf,.txt,.md,.csv,text/csv,image/jpeg,image/png,image/webp" className="hidden" onChange={event => void handleFileSelect(event.target.files?.[0])} />
@@ -1002,8 +1106,10 @@ export default function Home() {
                     <button type="button" onClick={toggleVoiceInput} aria-pressed={isListening} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", isListening && "axis-voice-recording")} aria-label={isListening ? "Stop voice input" : "Start voice input"}>{isListening ? <Square className="size-3.5" /> : <Mic className="size-4" />}</button>
                     <button type="button" onClick={() => setVoiceFocusOpen(true)} className="axis-icon-control hidden size-10 place-items-center rounded-xl transition-colors sm:grid sm:size-9" aria-label="Open voice focus"><Volume2 className="size-4" /></button>
                     <button type="button" onClick={() => setBackgroundMode(current => !current)} aria-pressed={backgroundMode} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", backgroundMode && "axis-settings-choice-active")} aria-label={backgroundMode ? "Turn off background task mode" : "Turn on background task mode"}><Clock3 className="size-4" /></button>
+                    <button type="button" onClick={() => setPromptLibraryOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open prompt library"><Library className="size-4" /></button>
+                    <button type="button" onClick={() => void toggleFocusAudio()} aria-pressed={focusAudioActive} className={cn("axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9", focusAudioActive && "axis-settings-choice-active")} aria-label={focusAudioActive ? "Stop local focus audio" : "Start local focus audio"}><Music2 className="size-4" /></button>
                     <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
-                    <span className="axis-muted-copy hidden text-[11px] sm:block">{backgroundMode ? "Background task · alert on completion" : "Enter to send · Shift + Enter for new line"}</span>
+                    <span className="axis-muted-copy hidden text-[11px] sm:block">{backgroundMode ? "Background task · alert on completion" : "Enter to send · Shift + Enter · /url for a private page summary"}</span>
                   </div>
                   <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className={cn("axis-primary-control size-10 rounded-xl p-0 hover:brightness-105 sm:size-9", draft.trim() && !isStreaming && providerStatusQuery.data?.ready && "axis-send-ready")}>
                     {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
@@ -1028,6 +1134,7 @@ export default function Home() {
               <MobileAction icon={<Plus className="size-4" />} label="New chat" onClick={startNewConversation} />
               <MobileAction icon={<Paperclip className="size-4" />} label="Upload file" onClick={() => { fileInputRef.current?.click(); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Camera className="size-4" />} label="Camera" onClick={() => { cameraInputRef.current?.click(); setMobileSheetOpen(false); }} />
+              <MobileAction icon={<Library className="size-4" />} label="Prompt library" onClick={() => { setPromptLibraryOpen(true); setMobileSheetOpen(false); }} />
               <MobileAction icon={<Download className="size-4" />} label="Export chat" onClick={() => { exportConversation(); setMobileSheetOpen(false); }} />
               {!isInstalled && canInstall && <MobileAction icon={<Download className="size-4" />} label="Install app" onClick={() => { void handleInstall(); setMobileSheetOpen(false); }} />}
             </div>
@@ -1044,7 +1151,7 @@ export default function Home() {
               <div className="py-4"><p className="text-sm font-medium">Font size</p><div className="mt-3 flex gap-2">{(["compact", "comfortable", "large"] as const).map(size => <button key={size} onClick={() => void saveSetting({ fontSize: size })} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs capitalize", settingsQuery.data?.fontSize === size ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{size}</button>)}</div></div>
               <div className="py-4"><p className="text-sm font-medium">Accent</p><div className="mt-3 flex gap-2">{(["lime", "sky", "violet"] as const).map(accent => <button key={accent} onClick={() => void saveSetting({ accent })} className={cn("size-8 rounded-full border-2 transition-transform hover:scale-105", accent === "lime" ? "bg-[#d7fa8a]" : accent === "sky" ? "bg-[#a7dcff]" : "bg-[#d6b4ff]", settingsQuery.data?.accent === accent ? "border-[#20231d]" : "border-transparent")} aria-label={`${accent} accent`} />)}</div></div>
               <div className="py-4"><p className="text-sm font-medium">Assistant mode</p><p className="axis-muted-copy mt-0.5 text-xs">A private account-synced response style; AXIS keeps the same server-side provider boundary.</p><div className="mt-3 flex flex-wrap gap-2">{(["balanced", "study", "developer", "creative"] as const).map(mode => <button key={mode} onClick={() => void saveSetting({ assistantMode: mode })} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs capitalize", settingsQuery.data?.assistantMode === mode ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{mode}</button>)}</div></div>
-              <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Memory</p><p className="axis-muted-copy mt-0.5 text-xs">Use earlier messages in the same private chat.</p></div><button onClick={() => void saveSetting({ memoryEnabled: !settingsQuery.data?.memoryEnabled })} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", settingsQuery.data?.memoryEnabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{settingsQuery.data?.memoryEnabled ? "On" : "Off"}</button></div>
+              <div className="py-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium">Memory bank</p><p className="axis-muted-copy mt-0.5 text-xs">Private instructions applied to future conversations only when Memory is on.</p></div><button onClick={() => void saveSetting({ memoryEnabled: !settingsQuery.data?.memoryEnabled })} className={cn("rounded-full px-3 py-1.5 text-xs font-medium", settingsQuery.data?.memoryEnabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{settingsQuery.data?.memoryEnabled ? "On" : "Off"}</button></div><textarea key={settingsQuery.data?.memoryInstructions ?? "empty"} defaultValue={settingsQuery.data?.memoryInstructions || ""} maxLength={6000} onBlur={event => { const next = event.target.value.trim() || null; if (next !== (settingsQuery.data?.memoryInstructions || null)) void saveSetting({ memoryInstructions: next }); }} placeholder="Example: I am learning Python. Prefer concise Hinglish explanations and practical examples." className="axis-input mt-3 min-h-28 w-full resize-y rounded-xl border p-3 text-sm outline-none" aria-label="Private memory instructions" /></div>
               <div className="flex items-center justify-between gap-4 py-4"><div><p className="text-sm font-medium">Privacy</p><p className="axis-muted-copy mt-0.5 text-xs">Strict keeps all workspace access user-scoped.</p></div><button onClick={() => void saveSetting({ privacy: settingsQuery.data?.privacy === "strict" ? "standard" : "strict" })} className="axis-settings-choice axis-settings-choice-inactive rounded-lg px-3 py-1.5 text-xs font-medium">{settingsQuery.data?.privacy || "strict"}</button></div>
               <div className="py-4"><div className="flex items-center justify-between gap-4"><div><p className="text-sm font-medium">Background task alerts</p><p className="axis-muted-copy mt-0.5 text-xs leading-5">Receive a generic completion alert. AXIS never puts your private prompt or reply text in a notification.</p></div><button onClick={() => void enableTaskAlerts()} disabled={updateNotificationPreferences.isPending || registerWebPush.isPending || registerExpoPush.isPending} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs font-medium disabled:opacity-50", notificationStatusQuery.data?.enabled ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{notificationStatusQuery.data?.enabled ? "Enabled" : "Enable"}</button></div><div className="mt-3 flex items-center justify-between gap-3"><span className="axis-muted-copy text-xs">Alert if a background task cannot finish</span><button onClick={() => void updateNotificationPreferences.mutateAsync({ errorAlerts: !notificationStatusQuery.data?.errorAlerts }).then(() => notificationStatusQuery.refetch())} className={cn("axis-settings-choice rounded-lg px-3 py-1.5 text-xs", notificationStatusQuery.data?.errorAlerts ? "axis-settings-choice-active" : "axis-settings-choice-inactive")}>{notificationStatusQuery.data?.errorAlerts ? "On" : "Off"}</button></div>{notificationStatusQuery.data?.recentTasks.some(task => task.status === "queued" || task.status === "running") && <p className="axis-accent-icon mt-3 inline-flex items-center gap-1.5 text-xs"><Clock3 className="size-3.5" /> AXIS has a private task in progress.</p>}</div>
               <div className="py-4"><p className="text-sm font-medium">Preferred model</p><p className="axis-muted-copy mt-0.5 text-xs">Saved per account; the current no-billing route still validates availability server-side.</p><input defaultValue={settingsQuery.data?.preferredModel || ""} onBlur={event => void saveSetting({ preferredModel: event.target.value.trim() || null })} placeholder="Auto (OmniRoute)" className="axis-input mt-3 h-10 w-full rounded-xl border px-3 text-sm outline-none" /></div>
@@ -1068,6 +1175,8 @@ export default function Home() {
               <CommandRow icon={<FolderKanban className="size-4" />} label="New project" detail="Create and pin a private project" onClick={() => { void createNewProject(); setCommandOpen(false); }} />
               <CommandRow icon={<Paperclip className="size-4" />} label="Upload file" detail="Attach a private document or image" onClick={() => { fileInputRef.current?.click(); setCommandOpen(false); }} />
               <CommandRow icon={<FileText className="size-4" />} label="Manage CSV files" detail="View, rename, or remove private CSV uploads" onClick={() => { openCsvManager(); setCommandOpen(false); }} />
+              <CommandRow icon={<Library className="size-4" />} label="Prompt library" detail="Insert a useful template into the draft" onClick={() => { setPromptLibraryOpen(true); setCommandOpen(false); }} />
+              <CommandRow icon={<Music2 className="size-4" />} label={focusAudioActive ? "Stop focus audio" : "Start focus audio"} detail="Generated locally; nothing is uploaded" onClick={() => { void toggleFocusAudio(); setCommandOpen(false); }} />
               {!isInstalled && canInstall && <CommandRow icon={<Download className="size-4" />} label="Install AXIS app" detail="Add this private workspace to your device" onClick={() => { void handleInstall(); setCommandOpen(false); }} />}
               <CommandRow icon={<Settings className="size-4" />} label="Workspace settings" detail="Theme, privacy, memory, and export" onClick={() => { setSettingsOpen(true); setCommandOpen(false); }} />
               <CommandRow icon={<PanelLeftClose className="size-4" />} label={focusMode ? "Exit focus mode" : "Enter focus mode"} detail="Reduce workspace distractions" onClick={() => { setFocusMode(current => !current); setCommandOpen(false); }} />
@@ -1089,6 +1198,14 @@ export default function Home() {
             <h3 className="mt-2 text-xl font-semibold">Speak, review, then send</h3>
             <p className="axis-muted-copy mt-3 text-sm leading-6">Your browser asks for microphone permission. AXIS adds the transcript to the private draft and never auto-sends it.</p>
             <div className="mt-6 flex justify-center gap-3"><button onClick={toggleVoiceInput} className="axis-primary-control rounded-xl px-4 py-2 text-sm font-medium">{isListening ? "Stop listening" : "Start listening"}</button><button onClick={() => setVoiceFocusOpen(false)} className="axis-toolbar-control rounded-xl px-4 py-2 text-sm">Close</button></div>
+          </div>
+        </div>
+      )}
+      {promptLibraryOpen && (
+        <div className="axis-overlay fixed inset-0 z-[70] grid place-items-center p-4" role="dialog" aria-modal="true" aria-label="Prompt library" onMouseDown={() => setPromptLibraryOpen(false)}>
+          <div className="axis-command w-full max-w-2xl rounded-3xl border p-5 sm:p-6" onMouseDown={event => event.stopPropagation()}>
+            <div className="flex items-start justify-between gap-4"><div><p className="axis-muted-copy font-mono text-[10px] uppercase tracking-[0.16em]">Private drafting tools</p><h3 className="mt-1 text-lg font-semibold">Prompt library</h3><p className="axis-muted-copy mt-1 text-xs leading-5">Choose a template to place it in your draft. AXIS never auto-sends a template.</p></div><button onClick={() => setPromptLibraryOpen(false)} className="axis-icon-control grid size-9 place-items-center rounded-xl" aria-label="Close prompt library"><X className="size-4" /></button></div>
+            <div className="mt-5 grid gap-3 sm:grid-cols-2">{promptTemplates.map(template => <button key={template.title} onClick={() => { setDraft(template.prompt); setDraftStatus("draft"); setPromptLibraryOpen(false); }} className="axis-empty-action rounded-2xl border p-4 text-left transition-all hover:-translate-y-0.5"><span className="flex items-center gap-2 text-sm font-semibold"><Library className="axis-accent-icon size-4" />{template.title}</span><span className="axis-muted-copy mt-2 block text-xs leading-5">{template.detail}</span></button>)}</div>
           </div>
         </div>
       )}
@@ -1183,11 +1300,15 @@ function QueryError({ onRetry }: { onRetry: () => void }) {
 
 function MessageBubble({ message, loading = false, onCopy, onSpeak }: { message: ChatEntry; loading?: boolean; onCopy: (content: string) => void; onSpeak: (content: string) => void }) {
   const isUser = message.role === "user";
+  const codeBlocks = isUser ? [] : getCodeBlocks(message.content);
+  const metrics = !isUser && (message.generationDurationMs != null || message.generatedWordCount != null)
+    ? [message.generationDurationMs != null ? `${(message.generationDurationMs / 1000).toFixed(1)}s` : null, message.generatedWordCount != null ? `${message.generatedWordCount} words` : null].filter(Boolean).join(" · ")
+    : "";
   return (
     <div className={cn("axis-message-bubble flex gap-3", isUser ? "axis-message-user-wrap justify-end" : "justify-start")}>
       {!isUser && <div className="axis-assistant-avatar mt-1 grid size-7 shrink-0 place-items-center rounded-lg"><Sparkles className="size-3.5" /></div>}
       <div className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-[14px] leading-6 sm:max-w-[78%]", isUser ? "axis-user-message axis-message-user rounded-tr-sm" : "axis-message-assistant axis-message-reply rounded-tl-sm border shadow-[0_3px_12px_rgba(37,42,33,0.03)]")}>
-        {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : loading ? <div className="axis-thinking-copy flex items-center gap-2 py-1"><span className="flex gap-1"><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-current" /></span><span className="text-xs">Thinking</span></div> : <><div className="assistant-markdown prose prose-sm max-w-none text-inherit"><Streamdown>{message.content}</Streamdown></div><div className="axis-message-actions mt-3 flex items-center gap-1 border-t pt-2 text-xs"><button type="button" onClick={() => onSpeak(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Read assistant response aloud"><Volume2 className="size-3" />Listen</button><button type="button" onClick={() => void onCopy(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Copy assistant response"><Copy className="size-3" />Copy</button></div></>}
+        {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : loading ? <div className="axis-thinking-copy flex items-center gap-2 py-1"><span className="flex gap-1"><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-current" /></span><span className="text-xs">Thinking</span></div> : <><div className="assistant-markdown prose prose-sm max-w-none text-inherit"><Streamdown controls={{ code: true, mermaid: true }} mermaidConfig={{ theme: "dark", securityLevel: "strict" }}>{message.content}</Streamdown></div>{metrics && <p className="axis-muted-copy mt-3 inline-flex items-center gap-1.5 text-[11px]"><Clock3 className="size-3" />{metrics}</p>}{codeBlocks.length > 0 && <div className="mt-3 flex flex-wrap gap-2">{codeBlocks.map(block => <DropdownMenu key={block.id}><DropdownMenuTrigger asChild><button type="button" className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2 text-xs" aria-label={`Choose download format for ${block.language || "text"} code`}><Download className="size-3" />Save code<ChevronDown className="size-3" /></button></DropdownMenuTrigger><DropdownMenuContent align="start"><DropdownMenuLabel>Download format</DropdownMenuLabel>{getCodeExportExtensions(block.language).map(extension => <DropdownMenuItem key={extension} onSelect={() => downloadCodeFile(block.code, extension, block.id)}>Save .{extension}</DropdownMenuItem>)}</DropdownMenuContent></DropdownMenu>)}</div>}<div className="axis-message-actions mt-3 flex items-center gap-1 border-t pt-2 text-xs"><button type="button" onClick={() => onSpeak(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Read assistant response aloud"><Volume2 className="size-3" />Listen</button><button type="button" onClick={() => void onCopy(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Copy assistant response"><Copy className="size-3" />Copy</button></div></>}
       </div>
     </div>
   );

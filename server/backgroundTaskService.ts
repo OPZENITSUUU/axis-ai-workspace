@@ -1,5 +1,5 @@
 import type { BackgroundTask } from "../drizzle/schema";
-import { getAssistantModeInstruction } from "./assistantMode";
+import { getAccountMemoryInstruction, getAssistantModeInstruction } from "./assistantMode";
 import {
   claimNextBackgroundTask,
   completeBackgroundTask,
@@ -15,6 +15,7 @@ import { ChatTurn } from "./geminiProvider";
 import { isProviderId, streamModelResponse } from "./modelProvider";
 import { sendTaskNotification } from "./notificationService";
 import { storageGetSignedUrl } from "./storage";
+import { resolveUrlSummaryPrompt } from "./urlSummaryService";
 
 function parseAttachmentIds(raw: string) {
   try {
@@ -41,11 +42,13 @@ async function executeBackgroundTask(task: BackgroundTask) {
   const historicalTurns: ChatTurn[] = allMessages
     .filter(message => message.id !== task.userMessageId)
     .map(message => ({ role: message.role === "assistant" ? "model" : "user" as "user", parts: [{ text: message.content }] }));
+  const accountMemory = getAccountMemoryInstruction(settings.memoryEnabled, settings.memoryInstructions);
   const modelTurns: ChatTurn[] = [
-    { role: "user", parts: [{ text: getAssistantModeInstruction(settings.assistantMode) }] },
+    { role: "user", parts: [{ text: [getAssistantModeInstruction(settings.assistantMode), accountMemory].filter(Boolean).join("\n\n") }] },
     ...historicalTurns,
   ];
-  const messageParts: ChatTurn["parts"] = [{ text: task.prompt }];
+  const urlSummaryPrompt = await resolveUrlSummaryPrompt(task.prompt);
+  const messageParts: ChatTurn["parts"] = [{ text: urlSummaryPrompt ?? task.prompt }];
   for (const attachment of attachments) {
     if (attachment.extractedText) {
       messageParts.push({ text: `\n\nAttached file: ${attachment.fileName}\n${attachment.extractedText}` });
@@ -61,9 +64,14 @@ async function executeBackgroundTask(task: BackgroundTask) {
 
   const controller = new AbortController();
   const provider = isProviderId(task.provider) ? task.provider : undefined;
+  const generationStartedAt = Date.now();
   let responseText = "";
   for await (const chunk of streamModelResponse(modelTurns, controller.signal, provider, task.model)) responseText += chunk;
-  const assistantMessage = await createMessage(task.userId, task.conversationId, "assistant", responseText || "I could not generate a response.");
+  const completedResponse = responseText || "I could not generate a response.";
+  const assistantMessage = await createMessage(task.userId, task.conversationId, "assistant", completedResponse, "complete", {
+    generationDurationMs: Math.max(0, Date.now() - generationStartedAt),
+    generatedWordCount: completedResponse.trim() ? completedResponse.trim().split(/\s+/).length : 0,
+  });
   if (conversation.title === "New conversation") await renameConversation(task.userId, task.conversationId, task.prompt.slice(0, 80));
   await completeBackgroundTask(task.id, assistantMessage.id);
   const completedTask = { ...task, status: "completed" as const, assistantMessageId: assistantMessage.id };

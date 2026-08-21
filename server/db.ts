@@ -222,7 +222,7 @@ export async function getUserSettings(userId: number): Promise<UserSettings> {
 
 export async function updateUserSettings(
   userId: number,
-  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "assistantMode" | "preferredModel" | "memoryEnabled" | "privacy" | "backgroundTaskNotifications" | "backgroundTaskErrors">>,
+  input: Partial<Pick<UserSettings, "theme" | "fontSize" | "accent" | "assistantMode" | "preferredModel" | "memoryEnabled" | "memoryInstructions" | "privacy" | "backgroundTaskNotifications" | "backgroundTaskErrors">>,
 ) {
   const db = await requireDb();
   await getUserSettings(userId);
@@ -292,9 +292,18 @@ export async function createMessage(
   role: "user" | "assistant",
   content: string,
   status: "complete" | "streaming" | "error" = "complete",
+  metrics?: { generationDurationMs?: number | null; generatedWordCount?: number | null },
 ) {
   const db = await requireDb();
-  const result = await db.insert(messages).values({ userId, conversationId, role, content, status });
+  const result = await db.insert(messages).values({
+    userId,
+    conversationId,
+    role,
+    content,
+    status,
+    generationDurationMs: metrics?.generationDurationMs ?? null,
+    generatedWordCount: metrics?.generatedWordCount ?? null,
+  });
   const id = Number((result[0] as { insertId: number }).insertId);
 
   await db

@@ -55,7 +55,15 @@ describe("AXIS chat route persistence", () => {
 
     expect(db.createMessage).toHaveBeenCalledTimes(2);
     expect(db.createMessage).toHaveBeenNthCalledWith(1, 42, 91, "user", "Private prompt");
-    expect(db.createMessage).toHaveBeenNthCalledWith(2, 42, 91, "assistant", "One response.");
+    expect(db.createMessage).toHaveBeenNthCalledWith(
+      2,
+      42,
+      91,
+      "assistant",
+      "One response.",
+      "complete",
+      expect.objectContaining({ generationDurationMs: expect.any(Number), generatedWordCount: 2 }),
+    );
     expect(writes.filter(value => value.includes("event: token"))).toHaveLength(2);
     expect(writes.some(value => value.includes("event: done"))).toBe(true);
   });

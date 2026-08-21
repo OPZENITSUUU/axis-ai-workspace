@@ -56,6 +56,7 @@ export const userSettings = mysqlTable(
     assistantMode: assistantModePreference.notNull().default("balanced"),
     preferredModel: varchar("preferredModel", { length: 128 }),
     memoryEnabled: boolean("memoryEnabled").notNull().default(true),
+    memoryInstructions: text("memoryInstructions"),
     privacy: privacyMode.notNull().default("strict"),
     backgroundTaskNotifications: boolean("backgroundTaskNotifications").notNull().default(false),
     backgroundTaskErrors: boolean("backgroundTaskErrors").notNull().default(true),
@@ -95,6 +96,8 @@ export const messages = mysqlTable(
     role: messageRole.notNull(),
     content: text("content").notNull(),
     status: messageStatus.notNull().default("complete"),
+    generationDurationMs: int("generationDurationMs"),
+    generatedWordCount: int("generatedWordCount"),
     createdAt: timestamp("createdAt").defaultNow().notNull(),
   },
   table => [

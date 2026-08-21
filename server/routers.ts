@@ -42,6 +42,7 @@ const settingsSchema = z.object({
   assistantMode: z.enum(["balanced", "study", "developer", "creative"]).optional(),
   preferredModel: z.string().trim().max(128).nullable().optional(),
   memoryEnabled: z.boolean().optional(),
+  memoryInstructions: z.string().trim().max(6_000).nullable().optional(),
   privacy: z.enum(["strict", "standard"]).optional(),
   backgroundTaskNotifications: z.boolean().optional(),
   backgroundTaskErrors: z.boolean().optional(),
