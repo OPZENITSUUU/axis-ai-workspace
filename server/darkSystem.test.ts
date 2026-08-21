@@ -28,6 +28,11 @@ describe("AXIS premium dark visual system", () => {
     expect(css).toContain("--axis-aurora-cyan");
     expect(css).toContain(".axis-active-glass");
     expect(css).toContain("axis-aurora-drift");
+    expect(css).toContain("axis-composer-sheen");
+    expect(css).toContain("axis-ready-pulse");
+    expect(css).toContain("axis-message-arrive");
+    expect(css).toContain(".axis-composer-ready");
+    expect(css).toContain(".axis-send-ready");
     expect(css).toContain("prefers-reduced-motion: reduce");
     expect(css).toContain("--axis-accent");
     expect(css).toContain(".axis-skeleton");
@@ -43,6 +48,9 @@ describe("AXIS premium dark visual system", () => {
     expect(home).toContain("axis-active-glass");
     expect(home).toContain("axis-warning");
     expect(home).toContain("axis-composer-dock");
+    expect(home).toContain("axis-composer-ready");
+    expect(home).toContain("axis-send-ready");
+    expect(home).toContain("axis-message-bubble");
     expect(home).toContain('enterKeyHint="send"');
     expect(home).toContain('aria-label="Message your AXIS assistant"');
     expect(home).not.toContain("GEMINI_KEY");

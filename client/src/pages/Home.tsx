@@ -874,7 +874,7 @@ export default function Home() {
                   {attachments.map(attachment => <AttachmentPill key={attachment.id} attachment={attachment} onRemove={() => setAttachments(current => current.filter(item => item.id !== attachment.id))} />)}
                 </div>
               )}
-              <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className="axis-composer rounded-2xl border p-2">
+              <form onSubmit={event => { event.preventDefault(); void submitPrompt(); }} className={cn("axis-composer rounded-2xl border p-2", draft.trim() && !isStreaming && "axis-composer-ready", isStreaming && "axis-composer-streaming")}>
                 <Textarea value={draft} onChange={event => { setDraft(event.target.value); setDraftStatus("draft"); }} onKeyDown={event => { if (event.key === "Enter" && !event.shiftKey) { event.preventDefault(); void submitPrompt(); } }} placeholder="Message your assistant…" aria-label="Message your AXIS assistant" enterKeyHint="send" autoCapitalize="sentences" className="min-h-[84px] resize-none border-0 bg-transparent px-3 pt-3 text-base shadow-none focus-visible:ring-0 sm:min-h-[68px] sm:text-[15px]" disabled={isStreaming} />
                 <div className="flex items-center justify-between gap-3 px-1 pb-1">
                   <div className="flex items-center gap-1">
@@ -887,7 +887,7 @@ export default function Home() {
                     <button type="button" onClick={() => setCommandOpen(true)} className="axis-icon-control grid size-10 place-items-center rounded-xl transition-colors sm:size-9" aria-label="Open tools"><Wrench className="size-4" /></button>
                     <span className="axis-muted-copy hidden text-[11px] sm:block">Enter to send · Shift + Enter for new line</span>
                   </div>
-                  <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className="axis-primary-control size-10 rounded-xl p-0 hover:brightness-105 sm:size-9">
+                  <Button type="submit" disabled={!draft.trim() || isStreaming || !providerStatusQuery.data?.ready} aria-describedby={!providerStatusQuery.data?.ready ? "gateway-unavailable-hint" : undefined} className={cn("axis-primary-control size-10 rounded-xl p-0 hover:brightness-105 sm:size-9", draft.trim() && !isStreaming && providerStatusQuery.data?.ready && "axis-send-ready")}>
                     {isStreaming ? <Loader2 className="size-4 animate-spin" /> : <ArrowUp className="size-4" />}
                     <span className="sr-only">Send message</span>
                   </Button>
@@ -1065,9 +1065,9 @@ function QueryError({ onRetry }: { onRetry: () => void }) {
 function MessageBubble({ message, loading = false, onCopy, onSpeak }: { message: ChatEntry; loading?: boolean; onCopy: (content: string) => void; onSpeak: (content: string) => void }) {
   const isUser = message.role === "user";
   return (
-    <div className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}>
+    <div className={cn("axis-message-bubble flex gap-3", isUser ? "axis-message-user-wrap justify-end" : "justify-start")}>
       {!isUser && <div className="axis-assistant-avatar mt-1 grid size-7 shrink-0 place-items-center rounded-lg"><Sparkles className="size-3.5" /></div>}
-      <div className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-[14px] leading-6 sm:max-w-[78%]", isUser ? "axis-user-message rounded-tr-sm" : "axis-message-assistant rounded-tl-sm border shadow-[0_3px_12px_rgba(37,42,33,0.03)]")}>
+      <div className={cn("max-w-[85%] rounded-2xl px-4 py-3 text-[14px] leading-6 sm:max-w-[78%]", isUser ? "axis-user-message axis-message-user rounded-tr-sm" : "axis-message-assistant axis-message-reply rounded-tl-sm border shadow-[0_3px_12px_rgba(37,42,33,0.03)]")}>
         {isUser ? <p className="whitespace-pre-wrap">{message.content}</p> : loading ? <div className="axis-thinking-copy flex items-center gap-2 py-1"><span className="flex gap-1"><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.2s]" /><i className="size-1.5 animate-bounce rounded-full bg-current [animation-delay:-0.1s]" /><i className="size-1.5 animate-bounce rounded-full bg-current" /></span><span className="text-xs">Thinking</span></div> : <><div className="assistant-markdown prose prose-sm max-w-none text-inherit"><Streamdown>{message.content}</Streamdown></div><div className="axis-message-actions mt-3 flex items-center gap-1 border-t pt-2 text-xs"><button type="button" onClick={() => onSpeak(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Read assistant response aloud"><Volume2 className="size-3" />Listen</button><button type="button" onClick={() => void onCopy(message.content)} className="axis-message-action inline-flex min-h-8 items-center gap-1 rounded-lg px-2" aria-label="Copy assistant response"><Copy className="size-3" />Copy</button></div></>}
       </div>
     </div>

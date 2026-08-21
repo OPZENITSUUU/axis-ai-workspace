@@ -19,6 +19,7 @@
 - [x] Correct the AXIS PWA update-cache flow so new deployed workspace layouts replace a stale app shell without exposing private chat content offline (verified after a deployed authenticated workspace reload).
 - [x] Add an automatic Android companion launch-time check, download, and restart flow for newer compatible AXIS updates (AXIS 0.2.0, version code 2, update-enabled preview APK build `aa9958d8-aee7-45a3-b9de-657a94698f87` completed). Native APK updates remain an explicit official-install step.
 - [x] Publish the sanitized AXIS automatic companion update flow, PWA cache correction, release guidance, and regression coverage to the public GitHub repository (verified public commit `1c545d2`).
+- [ ] Integrate the supplied premium midnight-glass UI reference with performance-conscious aurora motion, tactile controls, refined chat surfaces, and Android WebView-safe responsive behavior.
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
 - [x] Select and configure a replacement model provider because GitHub Models was retired on 30 July 2026 (OmniRoute is the selected experimental primary route).
