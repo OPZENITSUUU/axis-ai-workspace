@@ -1,4 +1,4 @@
-const CACHE_NAME = "axis-app-shell-v3";
+const CACHE_NAME = "axis-app-shell-v4";
 const APP_SHELL = ["/offline.html", "/manifest.webmanifest"];
 
 self.addEventListener("install", event => {
