@@ -11,6 +11,8 @@ The AXIS companion now uses **EAS Update** on its internal `preview` channel. On
 
 The existing `0.1.0` APK does not contain the native update client. The next internal build is **AXIS 0.2.0 (Android version code 2)** and is the one users must install once to enable automatic updates thereafter. The app uses the `appVersion` runtime policy, so EAS only delivers updates to binaries with matching native compatibility.
 
+The update-enabled internal Android APK has completed as build [`aa9958d8-aee7-45a3-b9de-657a94698f87`](https://expo.dev/accounts/opzenitsu/projects/axis-mobile/builds/aa9958d8-aee7-45a3-b9de-657a94698f87). Install this release once; subsequent compatible companion releases are fetched automatically when AXIS opens.
+
 ## Releasing a compatible update
 
 From `mobile/axis-mobile`, publish a reviewed companion-shell change with a clear release message:

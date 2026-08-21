@@ -17,7 +17,8 @@
 - [x] Remove the bottom online/synced badge and AI-disclaimer footer from AXIS web and Android companion chat screens, and let the composer use the reclaimed space (shared hosted workspace update verified at mobile viewport).
 - [x] Publish the sanitized AXIS bottom-chat layout update and its regression coverage to the public GitHub repository (verified public commit `b31f3b3`).
 - [x] Correct the AXIS PWA update-cache flow so new deployed workspace layouts replace a stale app shell without exposing private chat content offline (verified after a deployed authenticated workspace reload).
-- [ ] Add an automatic Android companion launch-time check for a newer official AXIS APK and show a trusted Update now action when one is available.
+- [x] Add an automatic Android companion launch-time check, download, and restart flow for newer compatible AXIS updates (AXIS 0.2.0, version code 2, update-enabled preview APK build `aa9958d8-aee7-45a3-b9de-657a94698f87` completed). Native APK updates remain an explicit official-install step.
+- [x] Publish the sanitized AXIS automatic companion update flow, PWA cache correction, release guidance, and regression coverage to the public GitHub repository (verified public commit `1c545d2`).
 
 - [x] Establish a secure GitHub Models API configuration that keeps the access token server-side only (closed as obsolete after GitHub Models retirement; no token was configured).
 - [x] Select and configure a replacement model provider because GitHub Models was retired on 30 July 2026 (OmniRoute is the selected experimental primary route).
