@@ -153,3 +153,4 @@
 - [x] Publish the latest sanitized AXIS Analytics Pro reference integration to the public GitHub repository (verified public commit `c29d031`).
 - [x] Adapt the supplied editorial color, typography, spacing, and radius tokens into AXIS web and Android companion themes while preserving midnight-glass contrast, accessibility, and private-workspace interactions.
 - [x] Build a new internal AXIS 0.4.0 preview APK containing the native companion theme refinement after release validation succeeds (build `fdaef745-a52b-4429-8cfc-e75256e16885`, completed).
+- [x] Verify the supplied editorial token refinement is visible on the deployed AXIS website at desktop and mobile workspace widths.
