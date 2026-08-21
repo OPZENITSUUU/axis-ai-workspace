@@ -17,3 +17,7 @@ The same authenticated command-palette structure remained available after a depl
 ## Private CSV manager smoke check
 
 The authenticated CSV manager opened from the command palette and settled into its scoped empty state: **No private CSV files yet**, with an explicit **Upload CSV** action. The manager stated that only uploads from the signed-in AXIS account appear there. No upload, rename, or deletion action was performed during this smoke check, so no private file data was changed.
+
+## Tablet workspace
+
+At a 768×1024 authenticated viewport, AXIS preserved its two-column private workspace: the conversation sidebar remained readable, the active new-conversation row stayed visually distinct, the empty workspace actions wrapped without overlap, and the composer remained visible above the lower status line. The responsive PWA **Install** action remained available in the tablet top bar. This captures the settled tablet workspace only; a tablet-specific settings or command overlay interaction still requires a viewport-controllable authenticated browser session.
