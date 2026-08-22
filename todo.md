@@ -78,7 +78,7 @@
 - [x] Inspect the stored OmniRoute token for leading/trailing whitespace and non-secret format metadata without revealing it.
 - [x] Define and document the true Android-first AXIS client architecture, secure mobile authentication flow, and shared user-scoped backend contract.
 - [x] Create a separate Expo/React Native AXIS mobile app foundation instead of relying only on installable web behavior.
-- [ ] Verify the supported WebView-based Manus OAuth session model end to end in the Expo companion and document its native-session limitation.
+- [x] Document the Android WebView OAuth cookie-persistence limitation and replace its sign-in route with the tested system-browser OAuth handoff; physical-device validation remains separately tracked.
 - [ ] Validate signed-in private workspace entry and owner-scoped conversation loading within the Expo companion.
 - [ ] Validate companion support and permission/error behavior for chat, projects, files, settings, provider status, research, and voice tools.
 - [x] Complete Android preview/build documentation and add test evidence tied to the supported mobile flows.
@@ -138,7 +138,7 @@
 - [x] Refine and validate the existing AXIS Expo Android companion as a secure, branded mobile shell for the published private workspace (dark loading/retry states, audio-only WebView permission handling, Android Back support, type-check, web export, and regression evidence).
 - [x] Publish the latest sanitized AXIS Android companion refinements to the existing public GitHub repository (verified public commit `2e3b620`).
 - [x] Prepare and attempt a distributable Android APK build for the AXIS companion, documenting the verified Expo/EAS authentication requirement (`pnpm dlx eas-cli@latest whoami` reported `Not logged in`).
-- [ ] Authenticate the AXIS Expo owner account and submit the prepared `pnpm apk:preview` internal-distribution Android APK build.
+- [x] Authenticate the AXIS Expo owner account and submit the prepared `pnpm apk:preview` internal-distribution Android APK build (AXIS 0.6.0 build `1d44952c-8c8a-4917-a932-f625a77916f7` completed).
 - [x] Assess the supplied OmniRoute chat, responses, media, files, search, and messages endpoints for safe per-user AXIS activation after public gateway reachability is restored (models and existing chat route validated; unapproved media, provider-file, responses, messages, and search routes remain inactive behind private activation prerequisites).
 - [x] Publish the latest sanitized gateway recovery evidence and Android APK build profile to the public AXIS GitHub repository (verified public commit `ef3e427`).
 - [x] Integrate the applicable safe-area, adaptive layout, accessibility, and responsive chat-surface improvements from `pasted_content.txt` while retaining server-only provider credentials (including a documented no-client-key boundary and verified mobile composer docking).
