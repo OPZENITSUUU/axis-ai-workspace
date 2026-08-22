@@ -1,39 +1,50 @@
 # AXIS Android companion device-validation checklist
 
-This checklist captures the verification that cannot be proven by source checks alone: a physical Android device or emulator must complete the system-browser sign-in return, establish the private workspace, request native permissions, and use AXIS features without crossing account boundaries.
+This checklist closes the validation gap that cannot be simulated by the web export: a real Android WebView must establish the owner’s Manus OAuth session, request native permissions, and hand every private action back to the cloud-hosted AXIS workspace.
 
-> The companion never contains an OmniRoute key, database credential, Firebase service-account key, or private chat data. The Manus OAuth session remains in the system browser; AXIS uses a short-lived, single-use server handoff to initialize the WebView session after the app return.
-
-## Install the current preview
-
-Install **AXIS 0.6.0** (Android version code `6`) from the current internal preview artifact:
-
-<https://expo.dev/artifacts/eas/Sw4G3-SXtwTyE2zkwYbIdsh9oNLwLYH8B60UmzRp-Mk.apk>
-
-The tested remote build is `1d44952c-8c8a-4917-a932-f625a77916f7`. It includes the system-browser secure sign-in fix and the Android notification configuration. Do not install the older 0.5.0 build for OAuth-loop validation.
+> The companion never receives the OmniRoute key, database credential, or Manus session token directly. Do not enter secrets into the native source code or capture them in screenshots.
 
 ## Prepare the device or emulator
 
-Use a device or emulator with network access. Install the APK, open AXIS, and expect its branded dark loading state to lead to either the workspace or an explicit **Continue securely** action. If the app displays a connection-retry screen, use **Try again** only after network access is restored.
+Use Android with Expo Go, keep the device online, and start the companion from the project folder:
+
+```bash
+cd mobile/axis-mobile
+pnpm install
+pnpm android
+```
+
+Open the AXIS companion and confirm its branded dark loading state resolves to the published AXIS workspace. If the app displays its connection-retry screen, test **Try again** only after the device has network access. When a linked page or OAuth page is in the WebView history, Android’s system Back control should return through that history before leaving the companion.
 
 ## Owner validation matrix
 
-Complete each applicable row using the same non-sensitive test account. Do not use another person’s conversations or files as a substitute for verifying private-data isolation.
+Complete every row using the same signed-in account. Do not use a second user’s conversations or files as a substitute for private-data verification.
 
 | Flow | Device action | Expected result | Evidence to retain |
-| --- | --- | --- | --- |
-| Secure Manus OAuth return | Tap **Continue securely**, complete normal sign-in in the system browser, then return through `axis://`. Close and reopen AXIS once. | AXIS returns directly to the private workspace without a login loop. The expired or reused browser-return handoff is rejected safely. | Two redacted screenshots: successful app return and reopened signed-in workspace. |
-| Private workspace | Confirm the account label, conversation list, and active workspace after loading. | Only the signed-in account’s conversations, projects, files, settings, and account memory appear. | Screenshot with conversation content redacted if needed. |
-| Chat and provider feedback | Send a harmless test prompt after the approved gateway is ready. If it is unavailable, attempt one prompt. | A streamed response appears, or AXIS gives clear persistent gateway-unavailable guidance instead of silently failing. | Redacted reply or guidance panel. |
-| Projects and files | Create or resume a project conversation and attach a small non-sensitive file. | Project context and file metadata remain user-scoped. | Project entry and attachment-name screenshot only. |
-| Settings and privacy | Open Settings, change a non-sensitive preference, then return to the workspace. | Settings remain responsive and account-scoped; no provider credential is shown. | Redacted settings screenshot. |
-| Voice Note | Start voice input, approve Android microphone permission, record a non-sensitive phrase, stop, and review before sending. | Permission is requested only when used; text returns to the draft and is not auto-sent. | Permission prompt or reviewed draft screenshot. |
-| Background-task notification | Enable task alerts, start a harmless background task, then background the app. | AXIS privately registers the device and shows a generic completion alert without task content. Tapping the alert returns to AXIS. | Redacted notification and return-to-workspace evidence. |
-| Error recovery | Disable network briefly, observe the retry state, restore network, and tap **Try again**. | The companion recovers without exposing credentials or looping between screens. | Retry-state screenshot. |
-| Android Back | Open a safe in-workspace link, then press Android Back once. | AXIS returns through WebView history before leaving the app. | Short redacted recording. |
+|---|---|---|---|
+| Manus OAuth | Choose sign in, complete the normal Manus flow, and return to the app. Close and reopen once. | The AXIS WebView returns to the private workspace and keeps its authenticated session where the platform permits cookies. | One redacted screen recording or two screenshots: return from login and reopened signed-in state. |
+| Private workspace | Confirm the conversation list, active conversation, and account label after the workspace loads. | Only the signed-in owner’s data appears; no unauthenticated entry screen is shown. | Screenshot with conversation text redacted if sensitive. |
+| Chat and provider feedback | Send a harmless test message after the gateway is configured. If the gateway is unavailable, attempt one send instead. | A streamed reply appears, or AXIS shows the persistent gateway-unavailable guidance rather than silently failing. | Screenshot of the reply or of the clear guidance panel. |
+| Projects and files | Open a project, create or resume a project conversation, then attach a non-sensitive small test file. | Project context remains scoped to the account and the upload is listed in AXIS. | Screenshot of project entry and attachment name only. |
+| Settings and privacy | Open Settings, review theme/accent/privacy, then return to the workspace. | Settings remain responsive and account-scoped; no provider credential is displayed. | Screenshot of settings panel with sensitive fields absent. |
+| Research | Run a non-sensitive research query from the AXIS tool. | Results are linked into the current private draft context and are not published as shared history. | Screenshot of sources with query text redacted if necessary. |
+| Voice | Start voice input, accept Android microphone permission, record a short non-sensitive phrase, and stop. | Permission is requested only when used; transcription returns to the current private chat. | Screenshot of Android permission prompt or completed transcript. |
+| Background-task notification | Install AXIS 0.5.0, sign in, allow notifications, start a harmless background task, then background the app. | The device registers an Expo push token privately and receives a generic completion alert without task content. Tapping it returns to AXIS. | Redacted lock-screen or notification-drawer screenshot, plus an observed return to AXIS. |
+| Error recovery | Disable network briefly, observe the retry state, then restore network and retry. | The companion makes the recovery action obvious and restores the shell without exposing credentials. | Screenshot of retry state. |
+| Android Back | Open an in-workspace link or OAuth page, then press the Android system Back control once. | The companion returns through WebView history before Android exits the app. | Short redacted screen recording. |
 
-## Acceptance and reporting
+## Acceptance and limitations
 
-The companion passes the Android milestone only after the Secure Manus OAuth return, Private workspace, Voice Note, notification, and Error recovery rows have been observed on a physical Android device or emulator. Web TypeScript, companion TypeScript, and regression tests verify source contracts, but they cannot prove deep-link return, runtime permissions, file-picker behavior, or actual notification delivery.
+The companion is ready for the first Android milestone only when each relevant row has been observed on a physical device or emulator. A successful Expo type-check and web export confirm bundle health, but they do **not** prove Android cookie persistence, WebView OAuth return behavior, runtime microphone permission, or file-picker behavior.
 
-When a row fails, retain only redacted evidence alongside the Android version, device or emulator model, AXIS version, and exact action. Do not capture a session token, handoff value, private prompt, provider credential, or Firebase configuration.
+The source and web-bundle validation was refreshed on 20 August 2026 after adding a dark AXIS loading surface, explicit retry handling for loading and HTTP failures, least-privilege audio-capture WebView permission handling, and Android browser-history Back support. These improvements remain subject to the physical-device checks above.
+
+Record any failed row with Android version, Expo Go version, device/emulator model, a redacted screenshot, and the exact action that triggered it. The owner can then supply that evidence for a targeted AXIS fix.
+
+## Distributable preview APK build handoff
+
+AXIS defines an internal-distribution Android **APK** profile in `mobile/axis-mobile/eas.json`. The current notification-capable preview is **AXIS 0.5.0**, completed as build `32890d61-13e5-4fe5-8938-c0c4313b0bb6` on 21 August 2026.
+
+The matching Firebase Android client configuration is held as a private Expo build-server file variable named `GOOGLE_SERVICES_JSON`. The native config resolves its path only during the remote build. It is ignored locally and is not included in GitHub, the website, screenshots, or browser code. The Firebase service-account key is separately stored in Expo’s credential manager.
+
+Install the resulting APK only on a test device, complete the validation matrix above, and retain only redacted evidence. The companion keeps AXIS credentials, private chat data, and provider traffic on the published AXIS backend.

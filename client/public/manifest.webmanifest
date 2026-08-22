@@ -4,16 +4,7 @@
   "description": "A private, persistent AI workspace for conversations, projects, files, and focused work.",
   "start_url": "/",
   "display": "standalone",
-  "scope": "/",
-  "background_color": "#060914",
-  "theme_color": "#060914",
-  "orientation": "portrait-primary",
-  "icons": [
-    {
-      "src": "/manus-storage/axis-pwa-icon-master_e973b7d9.png",
-      "sizes": "1024x1024",
-      "type": "image/png",
-      "purpose": "any maskable"
-    }
-  ]
+  "background_color": "#eeeee8",
+  "theme_color": "#20231d",
+  "orientation": "portrait-primary"
 }

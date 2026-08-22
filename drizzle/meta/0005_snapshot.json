@@ -1,8 +1,8 @@
 {
   "version": "5",
   "dialect": "mysql",
-  "id": "bc764686-30b6-447d-ae69-74bebb7f58c9",
-  "prevId": "cec08a49-a12e-406d-9de0-3c1cb4b2d213",
+  "id": "ffd7fc48-5dc0-4289-b5a2-3f792e32b492",
+  "prevId": "ade92a72-3a41-4b4a-a25c-f7913c1ff623",
   "tables": {
     "attachments": {
       "name": "attachments",
@@ -476,6 +476,81 @@
         }
       },
       "uniqueConstraints": {},
+      "checkConstraint": {}
+    },
+    "mobile_auth_handoffs": {
+      "name": "mobile_auth_handoffs",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": true
+        },
+        "userId": {
+          "name": "userId",
+          "type": "int",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "handoffHash": {
+          "name": "handoffHash",
+          "type": "varchar(64)",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "expiresAt": {
+          "name": "expiresAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false
+        },
+        "consumedAt": {
+          "name": "consumedAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": false,
+          "autoincrement": false
+        },
+        "createdAt": {
+          "name": "createdAt",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "autoincrement": false,
+          "default": "(now())"
+        }
+      },
+      "indexes": {
+        "mobile_auth_handoffs_expiry_idx": {
+          "name": "mobile_auth_handoffs_expiry_idx",
+          "columns": [
+            "expiresAt"
+          ],
+          "isUnique": false
+        }
+      },
+      "foreignKeys": {},
+      "compositePrimaryKeys": {
+        "mobile_auth_handoffs_id": {
+          "name": "mobile_auth_handoffs_id",
+          "columns": [
+            "id"
+          ]
+        }
+      },
+      "uniqueConstraints": {
+        "mobile_auth_handoffs_handoffHash_unique": {
+          "name": "mobile_auth_handoffs_handoffHash_unique",
+          "columns": [
+            "handoffHash"
+          ]
+        }
+      },
       "checkConstraint": {}
     },
     "notification_devices": {

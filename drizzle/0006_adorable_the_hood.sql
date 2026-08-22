@@ -1,2 +1,0 @@
-ALTER TABLE `background_tasks` ADD `clientRequestId` varchar(64) NOT NULL;--> statement-breakpoint
-ALTER TABLE `background_tasks` ADD CONSTRAINT `background_tasks_user_request_uq` UNIQUE(`userId`,`clientRequestId`);

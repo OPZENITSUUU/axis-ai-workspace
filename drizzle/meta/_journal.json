@@ -40,29 +40,8 @@
     {
       "idx": 5,
       "version": "5",
-      "when": 1787284571275,
-      "tag": "0005_parallel_iron_man",
-      "breakpoints": true
-    },
-    {
-      "idx": 6,
-      "version": "5",
-      "when": 1787284819729,
-      "tag": "0006_adorable_the_hood",
-      "breakpoints": true
-    },
-    {
-      "idx": 7,
-      "version": "5",
-      "when": 1787287200029,
-      "tag": "0007_polite_boomerang",
-      "breakpoints": true
-    },
-    {
-      "idx": 8,
-      "version": "5",
-      "when": 1787330940000,
-      "tag": "0008_mobile_auth_handoffs",
+      "when": 1787330479410,
+      "tag": "0005_unknown_may_parker",
       "breakpoints": true
     }
   ]

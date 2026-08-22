@@ -28,7 +28,7 @@ The ngrok public URL must remain online and continue forwarding to the intended 
 
 The authenticated models catalog is available through the active tunnel and advertises the dynamic `auto/*` families, including `auto/fast`, `auto/best-fast`, and `auto/best-free`. OmniRoute documents `auto/*` as a live-scored routing family, while its timeout issue notes that candidate probing and fallback can take 30–60 seconds before an upstream provider responds.[1] [2] The 30-second no-byte timeout is therefore consistent with a slow, unavailable, quota-exhausted, or unconfigured upstream route; it is not evidence that the AXIS credential or `/v1/models` endpoint is invalid.
 
-The owner should inspect the OmniRoute dashboard and tunnel without sending another billable request. For the locally hosted gateway, open `http://localhost:20128/dashboard`, then use its Health/request-log and Providers/Connections views:
+The owner should inspect the OmniRoute dashboard and tunnel without sending another billable request:
 
 1. Open the gateway request logs for the timed-out `POST /v1/chat/completions` and identify the selected provider, model, connection, and any upstream error or retry state.
 2. In the Providers/Connections dashboard, confirm at least one chat-capable provider is active, authenticated, healthy, and within its quota. A successful `/v1/models` result can list route candidates even when their upstream connection later stalls.

@@ -53,10 +53,16 @@
   --text-editorial-caption: 11px;
   --text-editorial-body-sm: 15px;
   --text-editorial-body: 18px;
+  --text-editorial-subheading: 34px;
+  --text-editorial-heading-sm: 46px;
   --text-editorial-heading: 70px;
+  --spacing-editorial-5: 5px;
   --spacing-editorial-19: 19px;
   --spacing-editorial-30: 30px;
+  --spacing-editorial-76: 76px;
+  --radius-editorial-md: 6.47619px;
   --radius-editorial-lg: 9.52381px;
+  --radius-editorial-3xl: 30.4762px;
 }
 
 :root {
@@ -108,6 +114,11 @@
   --axis-glass-outline: rgba(32, 35, 29, 0.12);
   --axis-aurora-cyan: #4eb9ef;
   --axis-aurora-violet: #7662d8;
+  --axis-editorial-parchment: #e5e4e0;
+  --axis-editorial-ink: #1d1d1d;
+  --axis-editorial-paper: #ffffff;
+  --axis-editorial-ash: #bfbebe;
+  --axis-editorial-stone: #cdcdc9;
   --axis-editorial-sphere: linear-gradient(255deg, rgb(250, 203, 14), rgb(240, 107, 168) 30%, rgb(120, 186, 230) 65%, rgb(255, 255, 255));
 }
 
@@ -159,6 +170,11 @@
   --axis-glass-outline: rgba(183, 213, 245, 0.14);
   --axis-aurora-cyan: #6bc8ff;
   --axis-aurora-violet: #9a83ff;
+  --axis-editorial-parchment: #e5e4e0;
+  --axis-editorial-ink: #1d1d1d;
+  --axis-editorial-paper: #ffffff;
+  --axis-editorial-ash: #bfbebe;
+  --axis-editorial-stone: #cdcdc9;
   --axis-editorial-sphere: linear-gradient(255deg, rgb(250, 203, 14), rgb(240, 107, 168) 30%, rgb(120, 186, 230) 65%, rgb(255, 255, 255));
 }
 
@@ -190,21 +206,6 @@
     padding-right: 1rem;
   }
   .flex { min-height: 0; min-width: 0; }
-  .axis-editorial-label {
-    font-family: var(--font-editorial);
-    font-size: var(--text-editorial-caption);
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-  }
-  .axis-editorial-display {
-    font-family: var(--font-editorial);
-    font-size: clamp(2.9rem, 6vw, 4.75rem);
-    font-weight: 400;
-    letter-spacing: 0.013em;
-    line-height: 0.9;
-  }
-  .axis-editorial-ghost { border-radius: var(--radius-editorial-lg); }
   .assistant-markdown :where(pre) {
     overflow-x: auto;
     border-radius: 0.85rem;
@@ -269,18 +270,39 @@
     z-index: -1;
   }
 
-  .dark .axis-shell::after,
   .dark .axis-entry::after {
-    background-image:
-      linear-gradient(115deg, rgba(255, 255, 255, 0.022) 0.5px, transparent 0.5px),
-      linear-gradient(25deg, rgba(126, 247, 199, 0.016) 0.5px, transparent 0.5px);
-    background-size: 18px 18px, 27px 27px;
+    background: var(--axis-editorial-sphere);
+    border-radius: 999px;
     content: "";
-    inset: 0;
-    opacity: 0.35;
+    filter: blur(3px);
+    height: min(42vw, 34rem);
+    opacity: 0.16;
     pointer-events: none;
     position: absolute;
+    right: max(-12vw, -9rem);
+    top: min(10vh, 6rem);
+    width: min(42vw, 34rem);
     z-index: -1;
+  }
+
+  .axis-editorial-label {
+    font-family: var(--font-editorial);
+    font-size: var(--text-editorial-caption);
+    font-weight: 700;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+  }
+
+  .axis-editorial-display {
+    font-family: var(--font-editorial);
+    font-size: clamp(2.9rem, 6vw, 4.75rem);
+    font-weight: 400;
+    letter-spacing: 0.013em;
+    line-height: 0.9;
+  }
+
+  .axis-editorial-ghost {
+    border-radius: var(--radius-editorial-lg);
   }
 
   .axis-sidebar {
@@ -315,34 +337,10 @@
     border-color: var(--axis-glass-outline) !important;
     box-shadow: 0 20px 64px rgba(0, 0, 0, 0.26), inset 0 1px rgba(255, 255, 255, 0.045) !important;
     backdrop-filter: blur(18px) saturate(118%);
-    overflow: hidden;
-    position: relative;
   }
-
-  .axis-composer::before {
-    background: linear-gradient(108deg, transparent 0%, color-mix(in srgb, var(--axis-aurora-cyan) 40%, transparent) 45%, color-mix(in srgb, var(--axis-accent) 60%, transparent) 55%, transparent 100%);
-    content: "";
-    height: 1px;
-    left: 10%;
-    opacity: 0;
-    position: absolute;
-    right: 10%;
-    top: 0;
-    transform: translateX(-18%);
-    transition: opacity 180ms cubic-bezier(0.23, 1, 0.32, 1);
-  }
-
-  .axis-composer-ready {
-    border-color: color-mix(in srgb, var(--axis-accent) 48%, var(--axis-glass-outline)) !important;
-    box-shadow: 0 22px 72px rgba(0, 0, 0, 0.30), 0 0 0 1px color-mix(in srgb, var(--axis-accent) 11%, transparent), inset 0 1px rgba(255, 255, 255, 0.065) !important;
-  }
-
-  .axis-composer-ready::before { opacity: 0.9; }
-
-  .axis-composer-streaming { border-color: color-mix(in srgb, var(--axis-aurora-cyan) 44%, var(--axis-glass-outline)) !important; }
 
   .axis-composer-dock {
-    padding-bottom: max(0.5rem, env(safe-area-inset-bottom));
+    padding-bottom: calc(1.25rem + env(safe-area-inset-bottom));
   }
 
   .axis-scroll-region {
@@ -592,17 +590,12 @@
   .axis-active-glass {
     background: linear-gradient(100deg, rgba(107, 200, 255, 0.16), rgba(154, 131, 255, 0.11)) !important;
     border: 1px solid rgba(183, 213, 245, 0.16);
-    box-shadow: 0 0 0 1px rgba(107, 200, 255, 0.04), 0 10px 30px rgba(3, 9, 22, 0.22), 0 0 24px rgba(126, 247, 199, 0.06), inset 0 1px rgba(255, 255, 255, 0.065);
+    box-shadow: 0 0 0 1px rgba(107, 200, 255, 0.04), 0 10px 30px rgba(3, 9, 22, 0.22), inset 0 1px rgba(255, 255, 255, 0.065);
   }
 
   .axis-user-message {
-    background: linear-gradient(135deg, color-mix(in srgb, var(--axis-accent) 94%, #d6fff0), color-mix(in srgb, var(--axis-aurora-cyan) 24%, var(--axis-accent))) !important;
+    background: var(--axis-accent) !important;
     color: var(--axis-accent-ink) !important;
-    box-shadow: 0 12px 28px rgba(34, 169, 123, 0.14);
-  }
-
-  .axis-message-assistant {
-    box-shadow: 0 14px 38px rgba(3, 9, 22, 0.17), inset 0 1px rgba(255, 255, 255, 0.055) !important;
   }
 
   .axis-danger-action {
@@ -785,10 +778,6 @@
     transform: scale(0.97);
   }
 
-  .axis-send-ready {
-    box-shadow: 0 8px 24px rgba(126, 247, 199, 0.23), 0 0 0 1px rgba(126, 247, 199, 0.16) !important;
-  }
-
   .axis-shell :is(button, a, input, textarea, select):focus-visible,
   .axis-entry :is(button, a, input, textarea, select):focus-visible {
     outline: 2px solid var(--axis-accent);
@@ -829,36 +818,6 @@
     .axis-attachment-pill:hover {
       box-shadow: 0 14px 38px rgba(3, 9, 22, 0.22), inset 0 1px rgba(255, 255, 255, 0.06);
     }
-
-    .axis-composer-ready::before {
-      animation: axis-composer-sheen 2.9s cubic-bezier(0.45, 0, 0.55, 1) infinite;
-    }
-
-    .axis-send-ready {
-      animation: axis-ready-pulse 2.4s ease-in-out infinite;
-    }
-
-    .axis-message-bubble {
-      animation: axis-message-arrive 260ms cubic-bezier(0.23, 1, 0.32, 1) both;
-    }
-
-    .axis-sidebar button:hover,
-    .axis-topbar button:hover {
-      transform: translateY(-1px);
-    }
-  }
-
-  @media (min-width: 768px) {
-    .dark .axis-sidebar {
-      border: 1px solid var(--axis-glass-outline) !important;
-      border-radius: 1.5rem;
-      margin: 0.7rem 0 0.7rem 0.7rem;
-      overflow: hidden;
-    }
-
-    .dark .axis-topbar {
-      margin-left: 0.35rem;
-    }
   }
 
   @keyframes axis-aurora-drift {
@@ -873,21 +832,6 @@
 
   @keyframes axis-glass-enter {
     from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.985); }
-    to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-  }
-
-  @keyframes axis-composer-sheen {
-    0%, 100% { transform: translateX(-18%); }
-    50% { transform: translateX(18%); }
-  }
-
-  @keyframes axis-ready-pulse {
-    0%, 100% { box-shadow: 0 8px 24px rgba(126, 247, 199, 0.20), 0 0 0 1px rgba(126, 247, 199, 0.12); }
-    50% { box-shadow: 0 10px 30px rgba(126, 247, 199, 0.32), 0 0 0 4px rgba(126, 247, 199, 0.055); }
-  }
-
-  @keyframes axis-message-arrive {
-    from { opacity: 0; transform: translate3d(0, 7px, 0) scale(0.992); }
     to { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
   }
 

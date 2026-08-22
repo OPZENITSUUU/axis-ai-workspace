@@ -72,13 +72,13 @@
 - [x] Configure and validate AXIS against the OmniRoute public HTTPS `/v1` base URL when the user provides it.
 - [x] Confirm the authenticated AXIS server chat path end to end after the gateway-level explicit-model stream succeeds (one owner-approved live `AXIS connection check` completed and persisted through the recovered public gateway).
 - [x] Receive the owner-controlled public HTTPS OmniRoute `/v1` URL needed to complete server-side gateway validation.
-- [x] Keep `https://cloud.omniroute.online/v1` out of the active route after its previous server-only 401; if it becomes the intended endpoint again, reopen it as a fresh validation item.
+- [ ] Revalidate `https://cloud.omniroute.online/v1` only if it becomes the intended active endpoint again; its previous server-only check returned 401.
 - [x] Provide the owner with an OmniRoute account-status, token-scope, and public endpoint authorization checklist for the observed 401.
 - [x] Commit the OmniRoute 401 account-status and authorization checklist to project documentation.
 - [x] Inspect the stored OmniRoute token for leading/trailing whitespace and non-secret format metadata without revealing it.
 - [x] Define and document the true Android-first AXIS client architecture, secure mobile authentication flow, and shared user-scoped backend contract.
 - [x] Create a separate Expo/React Native AXIS mobile app foundation instead of relying only on installable web behavior.
-- [x] Document the Android WebView OAuth cookie-persistence limitation and replace its sign-in route with the tested system-browser OAuth handoff; physical-device validation remains separately tracked.
+- [ ] Verify the supported WebView-based Manus OAuth session model end to end in the Expo companion and document its native-session limitation.
 - [ ] Validate signed-in private workspace entry and owner-scoped conversation loading within the Expo companion.
 - [ ] Validate companion support and permission/error behavior for chat, projects, files, settings, provider status, research, and voice tools.
 - [x] Complete Android preview/build documentation and add test evidence tied to the supported mobile flows.
@@ -99,14 +99,14 @@
 - [x] Capture the settled premium dark AXIS workspace after conversation data resolves at desktop and mobile breakpoints.
 - [x] Replace dark workspace loading placeholders with neutral shimmer surfaces instead of accent-colored blocks.
 - [x] Replace remaining hard-coded light utilities with first-class AXIS token classes across workspace and overlay surfaces, including research and tabbed UI where present.
-- [x] Capture and review authenticated AXIS desktop, tablet, and mobile states for a settled conversation, loading state, settings/modal, and command palette.
+- [ ] Capture and review authenticated AXIS desktop, tablet, and mobile states for a settled conversation, loading state, settings/modal, and command palette.
 - [x] Replace remaining hard-coded light utility classes in Home.tsx and related live workspace surfaces with explicit AXIS token/component classes.
 - [x] Verify and document whether research/dialog and tabbed UI surfaces are present in the live AXIS product, then apply explicit AXIS styling where applicable.
 - [x] Define a restrained midnight-glass and obsidian-aurora token layer that preserves AXIS contrast, teal intelligence cues, and reduced-motion safeguards.
 - [x] Apply translucent layered glass surfaces, cool cyan-violet ambient accents, illuminated active navigation, and consistent glass controls across the live AXIS page.
 - [x] Add lightweight aurora, hover, page, modal, and loading motion that remains performant and respects reduced-motion preferences.
 - [x] Verify the midnight-glass AXIS presentation at desktop, tablet, and mobile breakpoints without compromising readable text or loading stability.
-- [x] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and available overlay surfaces.
+- [ ] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and any available overlay surfaces.
 - [x] Correct the OmniRoute credential test so its normal-suite guard is skipped during an explicitly requested live probe.
 - [x] Create and deliver a complete sanitized AXIS source-code archive containing the web app, server, schema, mobile companion, tests, and documentation without secrets or dependency artifacts.
 - [x] Create and deliver the same verified sanitized AXIS source package in TAR.GZ format as an alternative to ZIP (320,482 bytes, 196 paths, and no `.env`, key, `.git`, or `node_modules` entries).
@@ -138,7 +138,7 @@
 - [x] Refine and validate the existing AXIS Expo Android companion as a secure, branded mobile shell for the published private workspace (dark loading/retry states, audio-only WebView permission handling, Android Back support, type-check, web export, and regression evidence).
 - [x] Publish the latest sanitized AXIS Android companion refinements to the existing public GitHub repository (verified public commit `2e3b620`).
 - [x] Prepare and attempt a distributable Android APK build for the AXIS companion, documenting the verified Expo/EAS authentication requirement (`pnpm dlx eas-cli@latest whoami` reported `Not logged in`).
-- [x] Authenticate the AXIS Expo owner account and submit the prepared `pnpm apk:preview` internal-distribution Android APK build (AXIS 0.6.0 build `1d44952c-8c8a-4917-a932-f625a77916f7` completed).
+- [ ] Authenticate the AXIS Expo owner account and submit the prepared `pnpm apk:preview` internal-distribution Android APK build.
 - [x] Assess the supplied OmniRoute chat, responses, media, files, search, and messages endpoints for safe per-user AXIS activation after public gateway reachability is restored (models and existing chat route validated; unapproved media, provider-file, responses, messages, and search routes remain inactive behind private activation prerequisites).
 - [x] Publish the latest sanitized gateway recovery evidence and Android APK build profile to the public AXIS GitHub repository (verified public commit `ef3e427`).
 - [x] Integrate the applicable safe-area, adaptive layout, accessibility, and responsive chat-surface improvements from `pasted_content.txt` while retaining server-only provider credentials (including a documented no-client-key boundary and verified mobile composer docking).
@@ -164,6 +164,3 @@
 - [x] Restore verified browser service-worker registration and a focused PWA regression contract after reconciling the public-source test suite.
 - [x] Restore the documented AXIS preview-update command so the automatic-update configuration remains reproducible.
 - [x] Add a responsive website APK download action that redirects to the current AXIS Android 0.6.0 release artifact.
-- [x] Update AXIS mobile companion documentation with the current system-browser sign-in handoff, AXIS 0.6.0 APK artifact, and physical-device validation checklist.
-- [x] Refresh the detailed AXIS Android device-validation matrix for the secure browser-return OAuth flow and the current 0.6.0 APK release.
-- [x] Align AXIS companion package metadata with the released 0.6.0 Android app identity while preserving the existing version-code build contract.
