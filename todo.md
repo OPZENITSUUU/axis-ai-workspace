@@ -164,3 +164,4 @@
 - [x] Restore verified browser service-worker registration and a focused PWA regression contract after reconciling the public-source test suite.
 - [x] Restore the documented AXIS preview-update command so the automatic-update configuration remains reproducible.
 - [x] Add a responsive website APK download action that redirects to the current AXIS Android 0.6.0 release artifact.
+- [x] Diagnose and improve the AXIS Android companion launch path after the owner reported that the APK does not open promptly (0.6.1 defers OTA download until workspace load, uses cached hardware WebView rendering and progress feedback; updated APK build `8ac61302-ad18-414a-b06e-2aa35e47e3e8` verified HTTP 200).

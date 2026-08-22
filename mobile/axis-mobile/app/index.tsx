@@ -31,6 +31,7 @@ export default function AxisMobileHome() {
   const [reloadKey, setReloadKey] = useState(0);
   const [canGoBack, setCanGoBack] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadProgress, setLoadProgress] = useState(0);
   const [loadError, setLoadError] = useState(false);
   const [mobileSession, setMobileSession] = useState<string | null>(null);
   const [signInBusy, setSignInBusy] = useState(false);
@@ -48,7 +49,10 @@ export default function AxisMobileHome() {
       return;
     }
 
-    if (!isUpdateAvailable) return;
+    // Do not compete with the first hosted-workspace render for network or CPU.
+    // The installed bundle remains usable immediately; a compatible OTA update is
+    // downloaded once the private workspace has finished loading.
+    if (!isUpdateAvailable || isLoading || loadError) return;
 
     let active = true;
     setUpdateState("downloading");
@@ -63,7 +67,7 @@ export default function AxisMobileHome() {
     return () => {
       active = false;
     };
-  }, [isUpdateAvailable, isUpdatePending]);
+  }, [isUpdateAvailable, isUpdatePending, isLoading, loadError]);
 
   useEffect(() => {
     if (updateState !== "restarting" || !Updates.isEnabled) return;
@@ -133,6 +137,7 @@ export default function AxisMobileHome() {
   const retryWorkspace = () => {
     setLoadError(false);
     setIsLoading(true);
+    setLoadProgress(0);
     setReloadKey((value) => value + 1);
   };
 
@@ -155,6 +160,7 @@ export default function AxisMobileHome() {
       setMobileSession(payload.sessionToken);
       setLoadError(false);
       setIsLoading(true);
+      setLoadProgress(0);
       setReloadKey(value => value + 1);
     } catch (error) {
       setSignInError(error instanceof Error ? error.message : "AXIS sign-in could not be completed.");
@@ -207,6 +213,9 @@ export default function AxisMobileHome() {
           key={reloadKey}
           source={{ uri: AXIS_WEB_URL }}
           originWhitelist={["https://*"]}
+          cacheEnabled
+          cacheMode="LOAD_DEFAULT"
+          androidLayerType="hardware"
           sharedCookiesEnabled
           thirdPartyCookiesEnabled
           injectedJavaScriptBeforeContentLoaded={mobileSession ? `try { sessionStorage.setItem(${JSON.stringify(SESSION_STORAGE_KEY)}, ${JSON.stringify(`${SESSION_COOKIE_NAME}=${mobileSession}`)}); } catch {} true;` : undefined}
@@ -216,9 +225,14 @@ export default function AxisMobileHome() {
           onLoadStart={() => {
             setIsLoading(true);
             setLoadError(false);
+            setLoadProgress(0);
+          }}
+          onLoadProgress={({ nativeEvent }) => {
+            setLoadProgress(nativeEvent.progress);
           }}
           onLoadEnd={() => {
             setIsLoading(false);
+            setLoadProgress(1);
             if (pendingNotificationUrlRef.current) postToWorkspace({ type: "axis-notification-open", url: pendingNotificationUrlRef.current });
           }}
           onError={() => {
@@ -229,11 +243,9 @@ export default function AxisMobileHome() {
             setIsLoading(false);
             setLoadError(true);
           }}
-          startInLoadingState
-          renderLoading={() => <LoadingState />}
         />
       )}
-      {isLoading && !loadError ? <LoadingState /> : null}
+      {isLoading && !loadError ? <LoadingState progress={loadProgress} /> : null}
     </SafeAreaView>
   );
 }
@@ -248,13 +260,14 @@ function UpdateBanner({ state }: { state: "downloading" | "restarting" }) {
   );
 }
 
-function LoadingState() {
+function LoadingState({ progress }: { progress: number }) {
+  const detail = progress < 0.2 ? "Connecting to your private workspace…" : progress < 0.9 ? "Loading your private workspace…" : "Finishing up…";
   return (
     <View style={styles.state}>
       <View style={styles.mark}><Text style={styles.markText}>✦</Text></View>
       <Text style={styles.title}>AXIS</Text>
       <ActivityIndicator color="#d7fa8a" style={styles.spinner} />
-      <Text style={styles.detail}>Opening your private workspace…</Text>
+      <Text style={styles.detail}>{detail}</Text>
       <Text style={styles.caption}>Your chats, files, and provider keys stay in your AXIS account.</Text>
     </View>
   );
