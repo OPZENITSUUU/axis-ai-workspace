@@ -1,52 +1,61 @@
 # AXIS Mobile
 
-This is the Android-first Expo companion for AXIS. Version `0.1.0` is a **native secure workspace shell**: it loads the published AXIS domain inside a native WebView so that Manus OAuth, account sessions, user-scoped chats, files, projects, settings, streaming chat, voice tools, and server-only provider keys remain in the established backend.
+AXIS Mobile is the Android-first Expo companion for the private AXIS workspace. The native shell loads the published AXIS web workspace, while the existing server remains the source of truth for authentication, user-scoped conversations, files, settings, streaming responses, and provider routing.
 
-It does not bundle any provider token, database credential, or user data. Native screens can replace the shell incrementally after the server has a dedicated mobile OAuth token-exchange contract.
+The companion contains **no AI-provider key, database credential, or private workspace data**.
 
-## Run on Android
+## Secure Android sign-in
+
+Android WebView cookie storage is not reliable across OAuth redirects. AXIS therefore uses a system-browser sign-in flow rather than asking a user to retry the same WebView login screen.
+
+1. An unauthenticated user taps **Continue securely** in the companion.
+2. The system browser completes the normal AXIS OAuth flow.
+3. AXIS creates a short-lived, single-use handoff token and returns through the `axis://` deep link.
+4. The native shell exchanges that value with AXIS and injects only the resulting Bearer session into the WebView before content loads.
+
+The one-time handoff is SHA-256 hashed server-side, expires in five minutes, and is marked consumed after use. The native app never receives an AI gateway credential.
+
+## Install AXIS 0.6.0
+
+The current internal Android APK includes the secure system-browser sign-in handoff.
+
+| Item | Value |
+| --- | --- |
+| App version | `0.6.0` |
+| Android version code | `6` |
+| EAS build | `1d44952c-8c8a-4917-a932-f625a77916f7` |
+| APK | [Download AXIS 0.6.0](https://expo.dev/artifacts/eas/Sw4G3-SXtwTyE2zkwYbIdsh9oNLwLYH8B60UmzRp-Mk.apk) |
+
+The same download is available inside the AXIS website from the entry screen, desktop header, mobile actions, Settings, and command palette.
+
+## Local development
 
 ```bash
 cd mobile/axis-mobile
 pnpm install
+pnpm typecheck
+pnpm exec expo export --platform web --output-dir /tmp/axis-mobile-web-export
 pnpm android
 ```
 
-Use an Android emulator or a physical device with Expo Go. Sign in inside the app using the normal AXIS Manus OAuth flow. The trusted AXIS web origin owns the session cookie and every private API request; the native bundle never receives the session token or AI gateway credential.
-
-The Android shell requests microphone access only when the loaded AXIS workspace asks for it, enabling the existing private voice-transcription flow. It grants only the Android audio-capture WebView resource, provides a branded loading state, an in-app retry state for connection failures, and follows browser history when the Android system back button is pressed. File inputs are handled by the Android WebView through the existing AXIS upload route; verify device permissions during the Expo preview before release.
-
-## Validate the first mobile milestone
-
-```bash
-pnpm typecheck
-pnpm exec expo export --platform web --output-dir /tmp/axis-mobile-web-export
-```
-
-The Android build route is `pnpm android`. An APK/AAB release is the next operational step and requires the owner’s Android signing and distribution configuration; no signing credential is stored in this repository.
-
-## Build an installable APK
-
-The companion includes a release-safe EAS preview profile that produces an installable Android APK rather than an app-store bundle. From this directory, run:
+To submit a new internal Android APK after validating source changes:
 
 ```bash
 pnpm apk:preview
 ```
 
-The first run opens or requests an Expo account session, then EAS handles the Android signing credential and returns a private build URL. Sign in only with the account intended to own AXIS releases. Do not create or commit a keystore manually. The `production` profile intentionally produces an Android App Bundle (`.aab`) for Play Store submission rather than an APK.
+The release profile uses managed remote Android credentials. Do not add a keystore, Firebase client file, service account, API key, or device token to source control.
 
-> This project environment does not include the Android SDK or an authenticated Expo/EAS build connection, so the cloud build needs the release owner to complete the Expo authentication step. The APK profile and source checks are included now to make that handoff deterministic.
+## Physical-device validation checklist
 
-### Current APK build status
+This remaining validation requires a physical Android device or emulator because desktop browser checks cannot prove the browser-to-app deep-link return or native permissions.
 
-On 20 August 2026, the available build environment was confirmed to have Java but no Android SDK, Gradle, or configured EAS session. `eas whoami` reported `Not logged in`, so no cloud build was submitted and no APK artifact exists yet. After the owner signs in to Expo/EAS, `pnpm apk:preview` will submit the prepared internal-distribution APK profile and return the private installer URL.
+1. Install AXIS 0.6.0 from the APK link and open it.
+2. Tap **Continue securely**, complete the browser sign-in, and confirm AXIS returns directly to the workspace without a loop.
+3. Confirm only the signed-in user’s conversations, projects, files, settings, and account memory are visible.
+4. Try a chat turn, upload/file picker, voice-note microphone prompt, settings, projects, and workspace export; confirm usable success and error states.
+5. Enable generic background-task alerts, then verify notification permission, completion alert, and tap routing without private prompt or reply text in the notification.
 
-### Latest validated evidence
+## Current validation status
 
-On 20 August 2026, the refined companion passed `pnpm typecheck` and a fresh `pnpm exec expo export --platform web --output-dir /tmp/axis-mobile-web-export-20260820`, producing `index.html`, metadata, and 21 exported files. The AXIS root type-check and full regression suite also passed with 44 active tests and one intentionally skipped external credential probe. The repository-level `server/mobileCompanion.test.ts` verifies that the shell targets the published AXIS origin, keeps provider credentials outside the native bundle, enables shared WebView cookies, declares Android microphone permission, limits runtime media permission handling to audio capture, handles Android browser-history back navigation, and provides a retry path for loading and HTTP failures.
-
-> These checks verify the source and web bundle only. A physical Android device or emulator is still required to validate the Manus OAuth WebView session, file picker behavior, microphone permission prompt, and every private workspace action.
-
-## Release direction
-
-The next milestones are native conversation navigation, secure mobile token exchange, file picking, microphone transcription, and Android APK/AAB signing. The existing AXIS backend remains the only source of truth for private data and provider routing.
+Web TypeScript, companion TypeScript, and the AXIS regression suite validate the source contract. The system-browser OAuth handoff, deep-link scheme, one-time exchange, response bootstrap, and automatic-update configuration are covered by regression tests. The final remaining proof is the physical-device checklist above.
