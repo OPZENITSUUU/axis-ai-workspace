@@ -14,6 +14,9 @@ This passive visual verification checked the published AXIS workspace shell afte
 | Post-publish mobile, 375×812 | The responsive header and bottom-docked composer remained within the narrow viewport while workspace data loaded; the mobile actions menu remains the entry point for the Android APK option at this width. |
 | Authenticated desktop Settings overlay | The live workspace opened the Settings drawer with account-scoped appearance, memory, privacy, notification, model, local voice tuning, Android APK download, CSV management, export, and delete controls. No provider secret was rendered in the exposed controls. |
 | Authenticated desktop command palette | The live command palette opened from the workspace header and offered scoped actions for chats, projects, uploads, CSV management, prompts, local focus audio, the Android APK, settings, and focus mode. |
+| Authenticated tablet, 768×1024 | The settled midnight-glass workspace retained the sidebar, active conversation state, editorial empty state, quick actions, prompt suggestions, and bottom-docked composer without horizontal overflow. |
+| Authenticated narrow mobile, 375×812 | The settled workspace condensed to the menu-led header, stacked quick actions and prompt suggestions, and a visible bottom-docked composer; no horizontal overflow appeared. |
+| Authenticated loading and overlay coverage | Captured workspace checks included the neutral message-loading skeleton, the Settings drawer, and the command palette. Animation/entrance effects were not treated as layout evidence. |
 
 ## Boundary
 

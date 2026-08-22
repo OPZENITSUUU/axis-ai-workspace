@@ -99,14 +99,14 @@
 - [x] Capture the settled premium dark AXIS workspace after conversation data resolves at desktop and mobile breakpoints.
 - [x] Replace dark workspace loading placeholders with neutral shimmer surfaces instead of accent-colored blocks.
 - [x] Replace remaining hard-coded light utilities with first-class AXIS token classes across workspace and overlay surfaces, including research and tabbed UI where present.
-- [ ] Capture and review authenticated AXIS desktop, tablet, and mobile states for a settled conversation, loading state, settings/modal, and command palette.
+- [x] Capture and review authenticated AXIS desktop, tablet, and mobile states for a settled conversation, loading state, settings/modal, and command palette.
 - [x] Replace remaining hard-coded light utility classes in Home.tsx and related live workspace surfaces with explicit AXIS token/component classes.
 - [x] Verify and document whether research/dialog and tabbed UI surfaces are present in the live AXIS product, then apply explicit AXIS styling where applicable.
 - [x] Define a restrained midnight-glass and obsidian-aurora token layer that preserves AXIS contrast, teal intelligence cues, and reduced-motion safeguards.
 - [x] Apply translucent layered glass surfaces, cool cyan-violet ambient accents, illuminated active navigation, and consistent glass controls across the live AXIS page.
 - [x] Add lightweight aurora, hover, page, modal, and loading motion that remains performant and respects reduced-motion preferences.
 - [x] Verify the midnight-glass AXIS presentation at desktop, tablet, and mobile breakpoints without compromising readable text or loading stability.
-- [ ] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and any available overlay surfaces.
+- [x] Capture and document authenticated midnight-glass desktop, tablet, and mobile workspace states after conversation data settles, including the loading transition and available overlay surfaces.
 - [x] Correct the OmniRoute credential test so its normal-suite guard is skipped during an explicitly requested live probe.
 - [x] Create and deliver a complete sanitized AXIS source-code archive containing the web app, server, schema, mobile companion, tests, and documentation without secrets or dependency artifacts.
 - [x] Create and deliver the same verified sanitized AXIS source package in TAR.GZ format as an alternative to ZIP (320,482 bytes, 196 paths, and no `.env`, key, `.git`, or `node_modules` entries).
