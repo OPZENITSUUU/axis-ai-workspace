@@ -166,3 +166,4 @@
 - [x] Add a responsive website APK download action that redirects to the current AXIS Android 0.6.0 release artifact.
 - [x] Update AXIS mobile companion documentation with the current system-browser sign-in handoff, AXIS 0.6.0 APK artifact, and physical-device validation checklist.
 - [x] Refresh the detailed AXIS Android device-validation matrix for the secure browser-return OAuth flow and the current 0.6.0 APK release.
+- [x] Align AXIS companion package metadata with the released 0.6.0 Android app identity while preserving the existing version-code build contract.
