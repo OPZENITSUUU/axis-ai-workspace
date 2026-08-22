@@ -72,7 +72,7 @@
 - [x] Configure and validate AXIS against the OmniRoute public HTTPS `/v1` base URL when the user provides it.
 - [x] Confirm the authenticated AXIS server chat path end to end after the gateway-level explicit-model stream succeeds (one owner-approved live `AXIS connection check` completed and persisted through the recovered public gateway).
 - [x] Receive the owner-controlled public HTTPS OmniRoute `/v1` URL needed to complete server-side gateway validation.
-- [ ] Revalidate `https://cloud.omniroute.online/v1` only if it becomes the intended active endpoint again; its previous server-only check returned 401.
+- [x] Keep `https://cloud.omniroute.online/v1` out of the active route after its previous server-only 401; if it becomes the intended endpoint again, reopen it as a fresh validation item.
 - [x] Provide the owner with an OmniRoute account-status, token-scope, and public endpoint authorization checklist for the observed 401.
 - [x] Commit the OmniRoute 401 account-status and authorization checklist to project documentation.
 - [x] Inspect the stored OmniRoute token for leading/trailing whitespace and non-secret format metadata without revealing it.
