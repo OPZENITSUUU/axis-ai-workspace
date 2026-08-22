@@ -20,6 +20,7 @@ This passive visual verification checked the published AXIS workspace shell afte
 | Authenticated passive reload | A direct workspace reload returned to the authenticated AXIS shell; once data settled, the existing private conversation restored without a new prompt, provider request, or temporary duplicate stream preview. This is passive refresh evidence only; the error-state retry control remains separately unverified. |
 | Authenticated availability recheck | A later live-session recheck again resolved the signed-in workspace, its private conversation list, Android APK action, Voice Note entry, and bottom composer without issuing a chat request. |
 | Public entry APK action | The signed-out AXIS entry screen rendered its `Download Android APK 0.6.0` action alongside the private-workspace sign-in path. The artifact redirect itself is separately verified by HTTP redirect-chain checks. |
+| Browser availability cross-check | A sandbox command-line request received a policy-level 403, while the interactive browser successfully loaded the signed-out AXIS entry page. Browser accessibility is therefore the relevant end-user availability signal for this managed domain. |
 
 ## Boundary
 
