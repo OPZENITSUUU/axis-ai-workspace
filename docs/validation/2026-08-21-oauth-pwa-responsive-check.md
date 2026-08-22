@@ -18,6 +18,7 @@ This passive visual verification checked the published AXIS workspace shell afte
 | Authenticated narrow mobile, 375×812 | The settled workspace condensed to the menu-led header, stacked quick actions and prompt suggestions, and a visible bottom-docked composer; no horizontal overflow appeared. |
 | Authenticated loading and overlay coverage | Captured workspace checks included the neutral message-loading skeleton, the Settings drawer, and the command palette. Animation/entrance effects were not treated as layout evidence. |
 | Authenticated passive reload | A direct workspace reload returned to the authenticated AXIS shell; once data settled, the existing private conversation restored without a new prompt, provider request, or temporary duplicate stream preview. This is passive refresh evidence only; the error-state retry control remains separately unverified. |
+| Authenticated availability recheck | A later live-session recheck again resolved the signed-in workspace, its private conversation list, Android APK action, Voice Note entry, and bottom composer without issuing a chat request. |
 
 ## Boundary
 
